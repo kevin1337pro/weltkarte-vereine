@@ -1,0 +1,1481 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Weltkarte Vereine</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --paper: #f5f0e4;
+        --paper-deep: #e4d6b7;
+        --ink: #18140f;
+        --muted: #665c4d;
+        --land: #d29a16;
+        --land-soft: #e4b23a;
+        --land-dark: #b47d0b;
+        --water: #fbf7ed;
+        --rule: rgba(24, 20, 15, 0.15);
+        --shadow: rgba(45, 31, 9, 0.28);
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        width: 100%;
+        min-height: 100%;
+        margin: 0;
+        background: #d9cfbd;
+      }
+
+      body {
+        display: grid;
+        place-items: center;
+        color: var(--ink);
+      }
+
+      button {
+        font: inherit;
+      }
+
+      .phone {
+        position: relative;
+        width: min(100vw, 430px);
+        height: 100svh;
+        min-height: 690px;
+        overflow: hidden;
+        background:
+          linear-gradient(180deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0) 25%),
+          var(--paper);
+        isolation: isolate;
+      }
+
+      .phone::before {
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+        content: "";
+        background-image:
+          linear-gradient(rgba(24, 20, 15, 0.08) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(24, 20, 15, 0.08) 1px, transparent 1px);
+        background-size: 27px 27px;
+        mask-image: linear-gradient(180deg, transparent, #000 11%, #000 88%, transparent);
+      }
+
+      .map-header {
+        position: absolute;
+        top: max(18px, env(safe-area-inset-top));
+        right: 18px;
+        left: 18px;
+        z-index: 8;
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 14px;
+        pointer-events: none;
+      }
+
+      .headline {
+        max-width: 245px;
+        transform-origin: left top;
+        transition:
+          opacity 360ms ease,
+          transform 360ms ease;
+      }
+
+      .eyebrow {
+        margin: 0 0 4px;
+        color: #84620e;
+        font-size: 0.72rem;
+        font-weight: 900;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        margin: 0;
+        color: #11100c;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 3.25rem;
+        font-style: italic;
+        font-weight: 900;
+        line-height: 0.84;
+      }
+
+      .step-pill {
+        display: grid;
+        min-width: 72px;
+        min-height: 38px;
+        padding: 0 11px;
+        place-items: center;
+        border: 1px solid rgba(24, 20, 15, 0.14);
+        border-radius: 999px;
+        background: rgba(250, 247, 238, 0.78);
+        box-shadow: 0 12px 34px rgba(43, 31, 13, 0.1);
+        color: #4f4228;
+        font-size: 0.76rem;
+        font-weight: 900;
+        pointer-events: auto;
+        backdrop-filter: blur(12px);
+        transition:
+          opacity 360ms ease,
+          transform 360ms ease;
+      }
+
+      .phone.is-layer-open .headline {
+        opacity: 0.28;
+        transform: translateY(-8px) scale(0.9);
+      }
+
+      .phone.is-layer-open .step-pill {
+        opacity: 0.72;
+        transform: translateY(-5px);
+      }
+
+      .map-stage {
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        overflow: hidden;
+        touch-action: pan-y;
+        background:
+          radial-gradient(circle at 52% 43%, rgba(226, 176, 48, 0.19), transparent 33%),
+          radial-gradient(circle at 24% 62%, rgba(151, 190, 180, 0.18), transparent 35%),
+          var(--water);
+      }
+
+      .map-stage::after {
+        position: absolute;
+        inset: 0 0 auto;
+        height: 190px;
+        pointer-events: none;
+        content: "";
+        background: linear-gradient(180deg, rgba(251, 247, 237, 0.96), rgba(251, 247, 237, 0.78) 48%, rgba(251, 247, 237, 0));
+      }
+
+      .map-world {
+        --map-x: -520px;
+        --map-y: -240px;
+        --map-scale: 1.4;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 1480px;
+        height: 920px;
+        transform:
+          translate3d(var(--map-x), var(--map-y), 0)
+          scale(var(--map-scale));
+        transform-origin: 0 0;
+        transition: transform 820ms cubic-bezier(0.18, 0.92, 0.2, 1);
+        will-change: transform;
+      }
+
+      .graticule {
+        fill: none;
+        stroke: rgba(24, 20, 15, 0.1);
+        stroke-width: 1;
+        stroke-dasharray: 8 12;
+      }
+
+      .continent,
+      .island {
+        fill: var(--land);
+        stroke: rgba(101, 67, 7, 0.24);
+        stroke-linejoin: round;
+        stroke-width: 2.4;
+      }
+
+      .continent.alt,
+      .island.alt {
+        fill: var(--land-soft);
+      }
+
+      .coast-detail {
+        fill: none;
+        stroke: rgba(118, 78, 9, 0.28);
+        stroke-linecap: round;
+        stroke-width: 2.2;
+      }
+
+      .terrain {
+        fill: none;
+        stroke: rgba(55, 38, 15, 0.2);
+        stroke-linecap: round;
+        stroke-width: 3;
+      }
+
+      .watermark-label {
+        fill: rgba(24, 20, 15, 0.13);
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 112px;
+        font-style: italic;
+        font-weight: 900;
+        letter-spacing: 0;
+        pointer-events: none;
+      }
+
+      .continent-label {
+        fill: #17130d;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 36px;
+        font-style: italic;
+        font-weight: 900;
+        letter-spacing: 0;
+        paint-order: stroke;
+        stroke: rgba(245, 240, 228, 0.78);
+        stroke-width: 5px;
+      }
+
+      .project-note {
+        fill: #443a2d;
+        font-size: 12px;
+        font-weight: 760;
+        opacity: 0.74;
+      }
+
+      .route-line {
+        fill: none;
+        stroke: rgba(24, 20, 15, 0.22);
+        stroke-dasharray: 10 13;
+        stroke-linecap: round;
+        stroke-width: 2.2;
+      }
+
+      .active-route {
+        fill: none;
+        stroke: rgba(21, 17, 13, 0.74);
+        stroke-linecap: round;
+        stroke-width: 4.5;
+        filter: drop-shadow(0 5px 8px rgba(72, 44, 4, 0.18));
+      }
+
+      .route-dot {
+        fill: #15110c;
+        opacity: 0;
+      }
+
+      .map-marker {
+        cursor: pointer;
+        outline: none;
+        transform-box: fill-box;
+        transform-origin: center;
+      }
+
+      .map-marker .tap-ring {
+        fill: rgba(251, 247, 237, 0.72);
+        stroke: rgba(24, 20, 15, 0.2);
+        stroke-width: 2.3;
+        transition:
+          fill 220ms ease,
+          stroke 220ms ease,
+          stroke-width 220ms ease;
+      }
+
+      .map-marker .halo {
+        fill: rgba(255, 246, 217, 0.28);
+        stroke: rgba(255, 246, 217, 0.52);
+        stroke-width: 2;
+        opacity: 0.82;
+      }
+
+      .map-marker .marker-icon {
+        fill: #15110c;
+        transition: transform 260ms ease;
+      }
+
+      .map-marker text {
+        fill: #17130d;
+        font-size: 15px;
+        font-weight: 900;
+        paint-order: stroke;
+        stroke: rgba(245, 240, 228, 0.9);
+        stroke-width: 4.4px;
+      }
+
+      .map-marker .marker-meta {
+        fill: rgba(24, 20, 15, 0.68);
+        font-size: 10px;
+        font-weight: 900;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+
+      .map-marker[aria-current="true"] .tap-ring {
+        fill: #fff8e5;
+        stroke: rgba(24, 20, 15, 0.46);
+        stroke-width: 3;
+      }
+
+      .map-marker[aria-current="true"] .marker-icon {
+        transform: scale(1.08);
+      }
+
+      .map-marker[aria-current="true"] .halo {
+        animation: pulse 1.7s ease-out infinite;
+      }
+
+      .map-marker:focus-visible .tap-ring {
+        stroke: #111;
+        stroke-width: 4.5;
+      }
+
+      @keyframes pulse {
+        0% {
+          opacity: 0.75;
+          transform: scale(0.9);
+        }
+
+        100% {
+          opacity: 0;
+          transform: scale(1.24);
+        }
+      }
+
+      .floating-icon {
+        position: absolute;
+        z-index: 11;
+        display: grid;
+        width: var(--float-size, 70px);
+        height: var(--float-size, 70px);
+        place-items: center;
+        border: 1px solid rgba(24, 20, 15, 0.17);
+        border-radius: 22px;
+        background:
+          radial-gradient(circle at 28% 24%, rgba(255, 255, 255, 0.9), transparent 42%),
+          #fff7e4;
+        box-shadow: 0 18px 58px rgba(43, 31, 13, 0.28);
+        color: #14110d;
+        opacity: 0;
+        pointer-events: none;
+        transform: translate(-50%, -50%) scale(0.92);
+      }
+
+      .floating-icon svg {
+        width: calc(var(--float-size, 70px) * 0.63);
+        height: calc(var(--float-size, 70px) * 0.63);
+        fill: currentColor;
+      }
+
+      .floating-icon.is-visible {
+        opacity: 1;
+      }
+
+      .city-strip {
+        position: absolute;
+        right: 0;
+        bottom: max(18px, env(safe-area-inset-bottom));
+        left: 0;
+        z-index: 7;
+        display: flex;
+        gap: 10px;
+        overflow-x: auto;
+        padding: 0 18px 2px;
+        scrollbar-width: none;
+        scroll-snap-type: x mandatory;
+      }
+
+      .city-strip::-webkit-scrollbar {
+        display: none;
+      }
+
+      .city-button {
+        display: grid;
+        grid-template-columns: 34px minmax(0, 1fr);
+        align-items: center;
+        min-width: 160px;
+        min-height: 58px;
+        padding: 9px 12px 9px 10px;
+        border: 1px solid rgba(24, 20, 15, 0.13);
+        border-radius: 8px;
+        background: rgba(255, 250, 236, 0.9);
+        box-shadow: 0 12px 36px rgba(43, 31, 13, 0.12);
+        color: var(--ink);
+        cursor: pointer;
+        scroll-snap-align: center;
+        backdrop-filter: blur(13px);
+      }
+
+      .city-button svg {
+        width: var(--button-icon, 25px);
+        height: var(--button-icon, 25px);
+        fill: currentColor;
+      }
+
+      .city-button span {
+        min-width: 0;
+        overflow: hidden;
+        font-size: 0.83rem;
+        font-weight: 900;
+        line-height: 1.05;
+        text-align: left;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .city-button small {
+        display: block;
+        margin-top: 2px;
+        overflow: hidden;
+        color: var(--muted);
+        font-size: 0.66rem;
+        font-weight: 760;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .city-button.is-active {
+        border-color: rgba(24, 20, 15, 0.34);
+        background: #15120e;
+        color: #fff5dc;
+      }
+
+      .city-button.is-active small {
+        color: rgba(255, 245, 220, 0.72);
+      }
+
+      .map-legend {
+        position: absolute;
+        right: 18px;
+        bottom: calc(max(18px, env(safe-area-inset-bottom)) + 74px);
+        z-index: 6;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        padding: 8px 10px;
+        border: 1px solid rgba(24, 20, 15, 0.12);
+        border-radius: 8px;
+        background: rgba(255, 250, 236, 0.75);
+        color: rgba(24, 20, 15, 0.7);
+        font-size: 0.68rem;
+        font-weight: 900;
+        backdrop-filter: blur(10px);
+      }
+
+      .map-legend span {
+        width: 26px;
+        height: 2px;
+        border-radius: 99px;
+        background: repeating-linear-gradient(90deg, #15110c 0 7px, transparent 7px 12px);
+      }
+
+      .soft-cover {
+        position: absolute;
+        inset: 0;
+        z-index: 9;
+        background: rgba(40, 29, 12, 0.18);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 420ms ease;
+      }
+
+      .soft-cover.is-open {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      .info-layer {
+        position: absolute;
+        inset: auto 0 0;
+        z-index: 10;
+        min-height: min(58svh, 462px);
+        padding: 26px 20px max(28px, env(safe-area-inset-bottom));
+        border-radius: 28px 28px 0 0;
+        background:
+          radial-gradient(circle at 16% 8%, rgba(226, 178, 58, 0.18), transparent 34%),
+          linear-gradient(180deg, rgba(255, 255, 255, 0.58), rgba(255, 255, 255, 0) 46%),
+          #fff7e5;
+        box-shadow: 0 -24px 86px rgba(43, 31, 13, 0.34);
+        transform: translateY(105%);
+        transition: transform 640ms cubic-bezier(0.18, 0.92, 0.2, 1);
+        will-change: transform;
+      }
+
+      .info-layer.is-open {
+        transform: translateY(0);
+      }
+
+      .info-layer::before {
+        position: absolute;
+        top: 10px;
+        left: 50%;
+        width: 46px;
+        height: 4px;
+        border-radius: 999px;
+        background: rgba(24, 20, 15, 0.2);
+        content: "";
+        transform: translateX(-50%);
+      }
+
+      .info-top {
+        display: grid;
+        grid-template-columns: 74px minmax(0, 1fr) 38px;
+        gap: 14px;
+        align-items: start;
+      }
+
+      .info-icon-spacer {
+        width: 74px;
+        height: 74px;
+      }
+
+      .info-kicker {
+        margin: 6px 0 5px;
+        color: #85620f;
+        font-size: 0.72rem;
+        font-weight: 950;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+
+      .info-title {
+        margin: 0;
+        overflow-wrap: anywhere;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 2.6rem;
+        font-style: italic;
+        font-weight: 900;
+        line-height: 0.92;
+      }
+
+      .close-button {
+        display: grid;
+        width: 38px;
+        height: 38px;
+        padding: 0;
+        place-items: center;
+        border: 1px solid rgba(24, 20, 15, 0.14);
+        border-radius: 50%;
+        background: #f1e5cb;
+        color: var(--ink);
+        cursor: pointer;
+      }
+
+      .close-button svg {
+        width: 18px;
+        height: 18px;
+        stroke: currentColor;
+        stroke-linecap: round;
+        stroke-width: 2.4;
+      }
+
+      .info-body {
+        margin: 22px 0 0;
+      }
+
+      .info-body p {
+        margin: 0;
+        color: #453d33;
+        font-size: 1rem;
+        font-weight: 720;
+        line-height: 1.52;
+      }
+
+      .info-facts {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin: 21px 0 0;
+      }
+
+      .fact {
+        min-height: 82px;
+        padding: 12px;
+        border: 1px solid rgba(24, 20, 15, 0.1);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.42);
+      }
+
+      .fact strong {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 0.72rem;
+        font-weight: 950;
+        letter-spacing: 0.09em;
+        text-transform: uppercase;
+      }
+
+      .fact span {
+        color: #504638;
+        font-size: 0.87rem;
+        font-weight: 780;
+        line-height: 1.28;
+      }
+
+      .detail-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        min-height: 44px;
+        margin-top: 22px;
+        padding: 0 14px;
+        border: 0;
+        border-radius: 8px;
+        background: #191510;
+        color: #fff6e1;
+        cursor: pointer;
+        font-weight: 950;
+        text-decoration: none;
+        appearance: none;
+      }
+
+      .detail-link svg {
+        width: 18px;
+        height: 18px;
+        stroke: currentColor;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        stroke-width: 2.5;
+      }
+
+      @media (min-width: 431px) {
+        .phone {
+          height: min(100svh, 860px);
+          box-shadow: 0 24px 80px rgba(50, 41, 25, 0.28);
+        }
+      }
+
+      @media (min-width: 760px) {
+        body {
+          padding: 0;
+        }
+
+        .phone {
+          width: 100vw;
+          max-width: 1440px;
+          height: 100svh;
+          min-height: 760px;
+          box-shadow: none;
+        }
+
+        .map-header {
+          top: 32px;
+          right: 34px;
+          left: 34px;
+          align-items: flex-start;
+        }
+
+        .headline {
+          max-width: 620px;
+        }
+
+        .eyebrow {
+          font-size: 0.78rem;
+        }
+
+        h1 {
+          font-size: 4.75rem;
+        }
+
+        .phone.is-layer-open .headline {
+          opacity: 0.34;
+          transform: translateY(-10px) scale(0.94);
+        }
+
+        .map-stage::after {
+          height: 230px;
+          background: linear-gradient(180deg, rgba(251, 247, 237, 0.92), rgba(251, 247, 237, 0.54) 54%, rgba(251, 247, 237, 0));
+        }
+
+        .city-strip {
+          top: 260px;
+          right: auto;
+          bottom: auto;
+          left: 34px;
+          flex-direction: column;
+          width: 268px;
+          max-height: calc(100svh - 362px);
+          overflow-x: hidden;
+          overflow-y: auto;
+          padding: 0 4px 4px 0;
+          scroll-snap-type: y mandatory;
+        }
+
+        .city-button {
+          width: 252px;
+          min-width: 0;
+          min-height: 62px;
+          grid-template-columns: 38px minmax(0, 1fr);
+          background: rgba(255, 250, 236, 0.78);
+        }
+
+        .map-legend {
+          right: auto;
+          bottom: 34px;
+          left: 34px;
+        }
+
+        .soft-cover {
+          background: linear-gradient(90deg, rgba(40, 29, 12, 0.04), rgba(40, 29, 12, 0.2));
+        }
+
+        .info-layer {
+          inset: 32px 32px 32px auto;
+          width: min(390px, calc(100vw - 72px));
+          min-height: 0;
+          overflow-y: auto;
+          padding: 30px 24px 28px;
+          border-radius: 24px;
+          box-shadow: 0 22px 82px rgba(43, 31, 13, 0.28);
+          transform: translateX(calc(100% + 48px));
+        }
+
+        .info-layer.is-open {
+          transform: translateX(0);
+        }
+
+        .info-layer::before {
+          top: 18px;
+          left: 24px;
+          width: 48px;
+          height: 4px;
+          transform: none;
+        }
+
+        .info-top {
+          grid-template-columns: 78px minmax(0, 1fr) 38px;
+        }
+
+        .info-icon-spacer {
+          width: 78px;
+          height: 78px;
+        }
+
+        .info-title {
+          font-size: 3rem;
+        }
+
+        .info-body p {
+          font-size: 1.04rem;
+        }
+      }
+
+      @media (min-width: 1120px) {
+        .phone {
+          max-width: none;
+        }
+
+        .map-header {
+          right: 42px;
+          left: 42px;
+        }
+
+        .city-strip {
+          left: 42px;
+          width: 296px;
+          top: 258px;
+        }
+
+        .city-button {
+          width: 278px;
+        }
+
+        .map-legend {
+          left: 42px;
+        }
+
+        .info-layer {
+          right: 42px;
+          width: 430px;
+        }
+      }
+
+      @media (max-height: 720px) {
+        .phone {
+          min-height: 630px;
+        }
+
+        .map-header {
+          top: max(12px, env(safe-area-inset-top));
+        }
+
+        h1 {
+          font-size: 2.75rem;
+        }
+
+        .map-legend {
+          display: none;
+        }
+
+        .info-layer {
+          min-height: 60svh;
+        }
+
+        .info-facts {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (min-width: 760px) and (max-height: 720px) {
+        .phone {
+          min-height: 620px;
+        }
+
+        h1 {
+          font-size: 4rem;
+        }
+
+        .city-strip {
+          top: 190px;
+          max-height: calc(100svh - 268px);
+        }
+
+        .info-layer {
+          inset: 20px 20px 20px auto;
+        }
+
+        .info-facts {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          scroll-behavior: auto !important;
+          transition-duration: 0.01ms !important;
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="phone" aria-label="Interaktive Weltkarte">
+      <header class="map-header">
+        <div class="headline">
+          <p class="eyebrow">Vereine weltweit</p>
+          <h1>Weltweit für Zukunft</h1>
+        </div>
+        <div class="step-pill" aria-live="polite">
+          <span id="stepCount">01 / 09</span>
+        </div>
+      </header>
+
+      <section class="map-stage" aria-label="Karte mit Standorten">
+        <svg class="map-world" viewBox="0 0 1480 920" role="img" aria-label="Detaillierte stilisierte Weltkarte">
+          <defs>
+            <g id="icon-education">
+              <path d="M0-24 31-10 0 4-31-10Z" />
+              <path d="M-19-4v18c9 8 29 8 38 0V-4L0 5Z" />
+              <path d="M26-8v20" stroke="currentColor" stroke-width="5" stroke-linecap="round" />
+              <circle cx="26" cy="17" r="4" />
+            </g>
+            <g id="icon-water">
+              <path d="M-21 10c9-26 26-40 26-40s17 14 26 40c4 15-7 29-26 29S-25 25-21 10Z" />
+              <path d="M-8 12c3 7 9 11 18 11" fill="none" stroke="#fff6e1" stroke-width="5" stroke-linecap="round" opacity=".68" />
+            </g>
+            <g id="icon-health">
+              <path d="M-23-6h16v-16H7v16h16V8H7v16H-7V8h-16Z" />
+            </g>
+            <g id="icon-home">
+              <path d="M-30-1 0-27 30-1h-8v30h-17V9h-10v20h-17V-1Z" />
+            </g>
+            <g id="icon-nature">
+              <path d="M-5 28h10V6c16-2 27-13 30-34C12-30-2-22-5-7c-6-15-21-21-38-12C-34-1-20 8-5 7Z" />
+            </g>
+            <g id="icon-community">
+              <circle cx="-18" cy="-12" r="11" />
+              <circle cx="18" cy="-12" r="11" />
+              <circle cx="0" cy="-20" r="12" />
+              <path d="M-36 27c2-19 13-29 27-29 8 0 14 3 18 8 4-5 10-8 18-8 14 0 25 10 27 29Z" />
+            </g>
+            <g id="icon-food">
+              <path d="M-24-30h7v27h-7Zm13 0h7v27h-7ZM2-30h7v27H2Z" />
+              <path d="M-24-4H9c0 16-7 25-17 28v16h-8V24C-27 21-34 12-34-4Z" />
+              <path d="M24-31c12 9 16 24 11 38-2 6-5 11-11 15v18h-8v-72Z" />
+            </g>
+            <g id="icon-energy">
+              <path d="M4-34-24 5h20l-8 35L26-9H6Z" />
+            </g>
+            <filter id="paper-noise">
+              <feTurbulence baseFrequency=".8" numOctaves="2" seed="9" type="fractalNoise" />
+              <feColorMatrix type="saturate" values="0" />
+              <feComponentTransfer>
+                <feFuncA type="table" tableValues="0 .13" />
+              </feComponentTransfer>
+            </filter>
+          </defs>
+
+          <rect width="1480" height="920" fill="#fbf7ed" />
+          <rect width="1480" height="920" filter="url(#paper-noise)" opacity=".52" />
+
+          <g class="graticule">
+            <path d="M120 80v760M310 70v780M500 70v780M690 70v780M880 70v780M1070 70v780M1260 80v760" />
+            <path d="M70 175h1340M60 330h1360M70 485h1340M80 640h1320M110 795h1260" />
+          </g>
+
+          <text class="watermark-label" x="50" y="250">Weltweit</text>
+          <text class="watermark-label" x="960" y="825">Zukunft</text>
+
+          <g id="landLayer">
+            <path class="continent" d="M104 230c24-76 89-134 172-149 57-10 91 14 136 8 62-8 122 19 158 72 29 44 25 93 50 122 24 29 76 28 96 73 22 49-11 94 5 139 10 30 48 45 60 79 18 49-17 99-70 101-50 2-80-40-125-43-45-4-65 32-105 23-35-8-46-43-87-43-37-1-57 27-96 17-43-11-59-57-45-97 12-35-1-58-38-72-54-20-84-72-72-128 7-32-55-43-39-103Z" />
+            <path class="continent alt" d="M310 540c50-25 121-3 153 48 36 57 19 130 55 179 18 24 17 58-5 84-21 26-58 34-88 16-25-15-26-47-48-69-24-24-64-22-85-49-22-30-6-70-18-103-13-35-43-48-37-77 4-18 25-20 73-29Z" />
+            <path class="continent alt" d="M650 285c38-54 113-70 170-39 45 24 60 74 107 82 50 8 88-34 153-22 65 12 91 69 152 86 58 16 102-10 144 24 48 39 48 111 9 157-37 43-100 46-153 35-63-13-103 9-151 33-57 30-123 12-153-35-21-32-55-44-95-32-51 15-98-6-111-51-12-44 25-79 3-114-18-29-71-30-88-69-8-19-4-38 13-55Z" />
+            <path class="continent" d="M749 494c62 6 107 50 122 111 16 67-10 140-57 190-34 37-59 78-90 75-33-3-37-58-76-89-37-30-79-58-74-112 4-48 43-59 64-96 23-41 57-83 111-79Z" />
+            <path class="continent" d="M1042 237c77-66 188-66 257-6 38 33 35 78-5 101-38 22-89-2-135 21-49 25-80 78-127 50-42-25-31-92 10-166Z" />
+            <path class="continent alt" d="M1187 626c76-41 182-21 241 47 38 45 29 104-26 123-43 15-76-13-119-1-53 15-75 63-121 46-52-20-51-92-8-130 33-29-10-65 33-85Z" />
+            <path class="continent" d="M1243 215c63-26 142-9 178 40 25 34 11 74-31 85-33 9-62-12-97-3-46 12-71 49-108 25-39-25-26-81 27-117 25-17 6-24 31-30Z" />
+            <path class="continent alt" d="M867 767c42-2 74 23 76 55 2 30-28 54-72 55-42 1-72-21-75-51-4-34 27-57 71-59Z" />
+          </g>
+
+          <g id="islandLayer">
+            <path class="island alt" d="M602 258c22-13 52-11 65 7 11 15 2 35-20 42-24 8-55-1-65-18-7-12 0-22 20-31Z" />
+            <path class="island" d="M615 330c17-9 38-4 45 9 7 14-4 29-24 31-20 2-35-8-36-22-1-7 4-13 15-18Z" />
+            <path class="island" d="M653 355c13-6 29-3 34 8 5 10-5 22-20 23-14 1-25-8-24-18 1-6 4-10 10-13Z" />
+            <path class="island alt" d="M947 635c19-11 46-6 56 10 9 15-2 34-24 37-22 3-41-8-42-24 0-8 3-15 10-23Z" />
+            <path class="island" d="M1006 669c12-9 30-7 38 3 8 11 1 25-15 28-16 3-30-4-31-16-1-5 2-10 8-15Z" />
+            <path class="island alt" d="M1077 688c18-12 44-8 53 9 8 16-3 35-26 38-22 2-39-10-38-27 0-8 3-14 11-20Z" />
+            <path class="island" d="M1188 733c21-13 50-9 60 10 9 18-6 39-31 39-24 1-44-15-42-32 1-7 5-12 13-17Z" />
+            <path class="island alt" d="M1294 587c22-9 51-1 60 17 8 16-7 32-31 32-22 0-39-12-39-27 0-9 3-16 10-22Z" />
+            <path class="island" d="M1339 620c17-7 36 0 41 13 5 14-8 27-27 24-18-2-29-14-24-25 2-5 5-9 10-12Z" />
+            <path class="island alt" d="M129 169c17-16 45-19 61-6 16 12 11 33-11 42-23 10-50 3-59-12-5-8-2-16 9-24Z" />
+            <path class="island" d="M231 119c20-15 51-12 65 5 14 18 1 41-26 44-25 3-48-11-49-29 0-8 3-14 10-20Z" />
+            <path class="island" d="M194 778c25-14 59-10 71 11 12 20-5 45-35 47-29 2-53-15-53-37 0-8 6-15 17-21Z" />
+            <path class="island alt" d="M1326 830c22-12 53-7 64 11 11 18-5 39-32 41-26 2-48-14-48-34 0-7 5-13 16-18Z" />
+          </g>
+
+          <g id="detailLayer">
+            <path class="coast-detail" d="M147 266c38-36 82-48 132-35M265 113c30 20 72 24 123 12M418 170c53 16 86 53 96 110M238 422c56 9 101 36 131 83M402 611c38 11 65 34 82 70M660 317c45-32 94-40 150-22M852 347c42 36 93 52 154 49M1034 367c70 14 135 29 196 44M720 594c55 8 95 36 118 83M806 747c-27 33-50 68-69 105M1109 279c48-27 99-35 153-20M1223 676c54-16 102-4 147 35" />
+            <path class="terrain" d="M246 303c38 0 70 14 95 43M396 256c32 18 53 44 63 77M358 719c30 10 54 31 72 64M790 417c35 23 61 54 80 94M751 647c30 15 52 39 66 72M992 442c45 15 83 42 114 82M1190 516c49 11 93 32 132 65" />
+          </g>
+
+          <g id="labelLayer">
+            <text class="continent-label" x="210" y="353" transform="rotate(-21 210 353)">Nordamerika</text>
+            <text class="continent-label" x="405" y="704" transform="rotate(68 405 704)">Südamerika</text>
+            <text class="continent-label" x="790" y="595" transform="rotate(-8 790 595)">Afrika</text>
+            <text class="continent-label" x="835" y="365" transform="rotate(8 835 365)">Europa</text>
+            <text class="continent-label" x="1110" y="501" transform="rotate(7 1110 501)">Asien</text>
+            <text class="continent-label" x="1233" y="792" transform="rotate(-16 1233 792)">Ozeanien</text>
+
+            <text class="project-note" x="205" y="198">Kanada</text>
+            <text class="project-note" x="206" y="216">Naturprojekt</text>
+            <text class="project-note" x="290" y="361">Mexiko</text>
+            <text class="project-note" x="290" y="379">Werkstatt</text>
+            <text class="project-note" x="384" y="566">Peru</text>
+            <text class="project-note" x="384" y="584">Food-Lab</text>
+            <text class="project-note" x="505" y="630">Brasilien</text>
+            <text class="project-note" x="505" y="648">Wasserstation</text>
+            <text class="project-note" x="706" y="304">Portugal</text>
+            <text class="project-note" x="706" y="322">Health Hub</text>
+            <text class="project-note" x="710" y="694">Kenia</text>
+            <text class="project-note" x="710" y="712">Schule</text>
+            <text class="project-note" x="1040" y="430">Nepal</text>
+            <text class="project-note" x="1040" y="448">Kinderhaus</text>
+            <text class="project-note" x="1088" y="626">Malaysia</text>
+            <text class="project-note" x="1088" y="644">Community</text>
+            <text class="project-note" x="1217" y="724">Australien</text>
+            <text class="project-note" x="1217" y="742">Solar-Lab</text>
+          </g>
+
+          <g id="routeLayer">
+            <path class="route-line" d="M238 265C315 290 247 378 312 398C370 416 354 545 407 601C456 649 484 644 503 676C592 622 625 409 713 350C760 423 725 541 770 617C895 575 926 479 1060 472C1105 534 1069 630 1114 665C1182 674 1205 730 1245 770" />
+            <path class="active-route" id="activeRoute" d="" />
+            <circle class="route-dot" id="routeDot" r="8" />
+          </g>
+
+          <g id="markersLayer"></g>
+        </svg>
+      </section>
+
+      <div class="map-legend" aria-hidden="true"><span></span> Gleiten</div>
+      <div class="soft-cover" id="softCover" hidden></div>
+      <div class="floating-icon" id="floatingIcon" aria-hidden="true"></div>
+
+      <nav class="city-strip" aria-label="Standorte wechseln"></nav>
+
+      <article class="info-layer" id="infoLayer" aria-live="polite" aria-modal="false">
+        <div class="info-top">
+          <div class="info-icon-spacer" aria-hidden="true"></div>
+          <div>
+            <p class="info-kicker" id="infoKicker">Projekt</p>
+            <h2 class="info-title" id="infoTitle">Vancouver</h2>
+          </div>
+          <button class="close-button" type="button" id="closeInfo" aria-label="Infobereich schließen">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M6 6 18 18M18 6 6 18" fill="none" />
+            </svg>
+          </button>
+        </div>
+        <div class="info-body">
+          <p id="infoText"></p>
+          <div class="info-facts">
+            <div class="fact">
+              <strong>Fokus</strong>
+              <span id="infoFocus"></span>
+            </div>
+            <div class="fact">
+              <strong>Region</strong>
+              <span id="infoRegion"></span>
+            </div>
+          </div>
+          <button class="detail-link" type="button" aria-label="Mehr Details öffnen">
+            Details ansehen
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M5 12h13M13 6l6 6-6 6" fill="none" />
+            </svg>
+          </button>
+        </div>
+      </article>
+    </main>
+
+    <script>
+      const locations = [
+        {
+          id: "vancouver",
+          city: "Vancouver",
+          continent: "Nordamerika",
+          label: "Naturprojekt",
+          icon: "icon-nature",
+          iconSize: 1.08,
+          ring: 48,
+          priority: "groß",
+          map: { x: 238, y: 265 },
+          text: "Eine mobile Naturwerkstatt verbindet Jugendgruppen, Stadtgärten und Kulturaktionen im öffentlichen Raum.",
+          focus: "Natur, Kultur, Jugend",
+          region: "Kanada"
+        },
+        {
+          id: "mexico",
+          city: "Mexico City",
+          continent: "Nordamerika",
+          label: "Werkstatt",
+          icon: "icon-community",
+          iconSize: 0.88,
+          ring: 40,
+          priority: "mittel",
+          map: { x: 312, y: 398 },
+          text: "Ein offenes Vereinslabor sammelt Ideen aus Schulen, Sportgruppen und lokalen Nachbarschaften.",
+          focus: "Community, Mentoring",
+          region: "Mexiko"
+        },
+        {
+          id: "lima",
+          city: "Lima",
+          continent: "Südamerika",
+          label: "Food-Lab",
+          icon: "icon-food",
+          iconSize: 0.78,
+          ring: 36,
+          priority: "klein",
+          map: { x: 407, y: 601 },
+          text: "Kleine Food-Labs geben Familien Zugang zu Kochkursen, Vorratswissen und Vereinsküchen.",
+          focus: "Ernährung, Familie",
+          region: "Peru"
+        },
+        {
+          id: "rio",
+          city: "Rio",
+          continent: "Südamerika",
+          label: "Wasserstation",
+          icon: "icon-water",
+          iconSize: 1,
+          ring: 45,
+          priority: "groß",
+          map: { x: 503, y: 676 },
+          text: "Mobile Wasserstationen und Nachbarschaftsarbeit verbinden Versorgung mit Bildung und Hygiene.",
+          focus: "Wasser, Hygiene",
+          region: "Brasilien"
+        },
+        {
+          id: "lisbon",
+          city: "Lissabon",
+          continent: "Europa",
+          label: "Health Hub",
+          icon: "icon-health",
+          iconSize: 0.86,
+          ring: 39,
+          priority: "mittel",
+          map: { x: 713, y: 350 },
+          text: "Ein Health Hub unterstützt Familien mit Beratung, Reparaturhilfe und schnellen Vereinskontakten.",
+          focus: "Beratung, Gesundheit",
+          region: "Portugal"
+        },
+        {
+          id: "nairobi",
+          city: "Nairobi",
+          continent: "Afrika",
+          label: "Schulprojekt",
+          icon: "icon-education",
+          iconSize: 1.16,
+          ring: 52,
+          priority: "groß",
+          map: { x: 770, y: 617 },
+          text: "Das Projekt stärkt Schulwege, Lernmaterial und regelmäßige Nachmittagsbetreuung.",
+          focus: "Bildung, Betreuung",
+          region: "Kenia"
+        },
+        {
+          id: "kathmandu",
+          city: "Kathmandu",
+          continent: "Asien",
+          label: "Kinderhaus",
+          icon: "icon-home",
+          iconSize: 0.92,
+          ring: 42,
+          priority: "mittel",
+          map: { x: 1060, y: 472 },
+          text: "Ein Kinderhaus schafft verlässliche Räume, warme Mahlzeiten und Lernbegleitung.",
+          focus: "Schutz, Zuhause",
+          region: "Nepal"
+        },
+        {
+          id: "kuala",
+          city: "Kuala Lumpur",
+          continent: "Asien",
+          label: "Community",
+          icon: "icon-community",
+          iconSize: 0.84,
+          ring: 38,
+          priority: "klein",
+          map: { x: 1114, y: 665 },
+          text: "Lokale Gruppen organisieren Baumpflanzungen, Workshops und Patenschaften.",
+          focus: "Umwelt, Vereine",
+          region: "Malaysia"
+        },
+        {
+          id: "sydney",
+          city: "Sydney",
+          continent: "Ozeanien",
+          label: "Solar-Lab",
+          icon: "icon-energy",
+          iconSize: 1.28,
+          ring: 55,
+          priority: "sehr groß",
+          map: { x: 1245, y: 770 },
+          text: "Ein Solar-Lab macht Technik greifbar: Jugendliche bauen Mini-Anlagen und teilen Wissen mit Vereinen.",
+          focus: "Energie, Technik",
+          region: "Australien"
+        }
+      ];
+
+      const svgNS = "http://www.w3.org/2000/svg";
+      const phone = document.querySelector(".phone");
+      const world = document.querySelector(".map-world");
+      const markersLayer = document.querySelector("#markersLayer");
+      const strip = document.querySelector(".city-strip");
+      const stepCount = document.querySelector("#stepCount");
+      const activeRoute = document.querySelector("#activeRoute");
+      const routeDot = document.querySelector("#routeDot");
+      const infoLayer = document.querySelector("#infoLayer");
+      const softCover = document.querySelector("#softCover");
+      const closeInfo = document.querySelector("#closeInfo");
+      const floatingIcon = document.querySelector("#floatingIcon");
+      const infoKicker = document.querySelector("#infoKicker");
+      const infoTitle = document.querySelector("#infoTitle");
+      const infoText = document.querySelector("#infoText");
+      const infoFocus = document.querySelector("#infoFocus");
+      const infoRegion = document.querySelector("#infoRegion");
+
+      let activeIndex = 0;
+      let previousIndex = 0;
+      let openId = null;
+
+      function iconSvg(iconId) {
+        return `<svg viewBox="-46 -46 92 92" aria-hidden="true"><use href="#${iconId}"></use></svg>`;
+      }
+
+      function isWebLayout() {
+        return window.matchMedia("(min-width: 760px)").matches;
+      }
+
+      function createSvgElement(tag, attrs = {}) {
+        const node = document.createElementNS(svgNS, tag);
+        Object.entries(attrs).forEach(([key, value]) => node.setAttribute(key, value));
+        return node;
+      }
+
+      function renderMarkers() {
+        markersLayer.innerHTML = "";
+
+        locations.forEach((item) => {
+          const marker = createSvgElement("g", {
+            class: "map-marker",
+            "data-location": item.id,
+            tabindex: "0",
+            role: "button",
+            "aria-label": `${item.city} auswählen`,
+            transform: `translate(${item.map.x} ${item.map.y})`
+          });
+
+          const halo = createSvgElement("circle", { class: "halo", r: item.ring + 14 });
+          const ring = createSvgElement("circle", { class: "tap-ring", r: item.ring });
+          const iconWrap = createSvgElement("g", {
+            class: "marker-icon",
+            transform: `scale(${item.iconSize})`
+          });
+          const use = createSvgElement("use", { href: `#${item.icon}` });
+          const text = createSvgElement("text", {
+            x: "0",
+            y: item.ring + 21,
+            "text-anchor": "middle"
+          });
+          const meta = createSvgElement("text", {
+            class: "marker-meta",
+            x: "0",
+            y: item.ring + 37,
+            "text-anchor": "middle"
+          });
+
+          text.textContent = item.city;
+          meta.textContent = item.priority;
+          iconWrap.append(use);
+          marker.append(halo, ring, iconWrap, text, meta);
+          markersLayer.append(marker);
+        });
+      }
+
+      function renderButtons() {
+        strip.innerHTML = locations
+          .map((item, index) => {
+            const buttonIcon = Math.round(23 + item.iconSize * 5);
+            return `
+              <button class="city-button" type="button" data-index="${index}" style="--button-icon: ${buttonIcon}px">
+                ${iconSvg(item.icon)}
+                <span>${item.city}<small>${item.label}</small></span>
+              </button>`;
+          })
+          .join("");
+      }
+
+      function centerOnLocation(location) {
+        const compact = phone.clientWidth < 380;
+        const web = isWebLayout();
+        const panelWidth = openId && web ? infoLayer.offsetWidth + parseFloat(getComputedStyle(infoLayer).right || 0) : 0;
+        const leftRail = web ? Math.min(320, phone.clientWidth * 0.26) : 0;
+        const scale = web ? (phone.clientWidth >= 1120 ? 1.03 : 0.9) : compact ? 1.73 : 1.62;
+        const centerX = web
+          ? leftRail + (phone.clientWidth - leftRail - panelWidth) / 2
+          : phone.clientWidth / 2;
+        const centerY = web ? phone.clientHeight * 0.53 : openId ? phone.clientHeight * 0.34 : phone.clientHeight * 0.45;
+        const x = centerX - location.map.x * scale;
+        const y = centerY - location.map.y * scale;
+
+        world.style.setProperty("--map-scale", scale);
+        world.style.setProperty("--map-x", `${x}px`);
+        world.style.setProperty("--map-y", `${y}px`);
+      }
+
+      function routeBetween(from, to) {
+        const midX = (from.map.x + to.map.x) / 2;
+        const midY = Math.min(from.map.y, to.map.y) - Math.max(70, Math.abs(to.map.x - from.map.x) * 0.13);
+        return `M${from.map.x} ${from.map.y} Q${midX} ${midY} ${to.map.x} ${to.map.y}`;
+      }
+
+      function animateRoute(from, to) {
+        const path = routeBetween(from, to);
+        activeRoute.setAttribute("d", path);
+        activeRoute.style.strokeDasharray = "none";
+        activeRoute.style.strokeDashoffset = "0";
+
+        const length = activeRoute.getTotalLength();
+        activeRoute.style.strokeDasharray = length;
+        activeRoute.style.strokeDashoffset = length;
+        activeRoute.animate(
+          [
+            { strokeDashoffset: length },
+            { strokeDashoffset: 0 }
+          ],
+          {
+            duration: 720,
+            easing: "cubic-bezier(.18,.92,.2,1)",
+            fill: "forwards"
+          }
+        );
+
+        routeDot.setAttribute("cx", to.map.x);
+        routeDot.setAttribute("cy", to.map.y);
+        routeDot.animate(
+          [
+            { opacity: 0, transform: "scale(.6)" },
+            { opacity: 1, transform: "scale(1.2)", offset: 0.65 },
+            { opacity: 0, transform: "scale(.2)" }
+          ],
+          {
+            duration: 820,
+            easing: "ease-out"
+          }
+        );
+      }
+
+      function setActive(index, options = {}) {
+        previousIndex = activeIndex;
+        activeIndex = (index + locations.length) % locations.length;
+        const item = locations[activeIndex];
+
+        document.querySelectorAll(".map-marker").forEach((marker) => {
+          const isCurrent = marker.dataset.location === item.id;
+          marker.setAttribute("aria-current", String(isCurrent));
+        });
+
+        [...strip.querySelectorAll(".city-button")].forEach((button, buttonIndex) => {
+          button.classList.toggle("is-active", buttonIndex === activeIndex);
+          if (buttonIndex === activeIndex && !options.skipScroll) {
+            button.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" });
+          }
+        });
+
+        stepCount.textContent = `${String(activeIndex + 1).padStart(2, "0")} / ${String(locations.length).padStart(2, "0")}`;
+        centerOnLocation(item);
+
+        if (!options.skipRoute && previousIndex !== activeIndex) {
+          animateRoute(locations[previousIndex], item);
+        }
+
+        if (openId) {
+          updateInfo(item);
+        }
+      }
+
+      function updateInfo(item) {
+        infoKicker.textContent = `${item.continent} · ${item.label}`;
+        infoTitle.textContent = item.city;
+        infoText.textContent = item.text;
+        infoFocus.textContent = item.focus;
+        infoRegion.textContent = item.region;
+      }
+
+      function markerCenterOnScreen(item) {
+        const worldRect = world.getBoundingClientRect();
+        const svgBounds = world.viewBox.baseVal;
+        const sx = worldRect.width / svgBounds.width;
+        const sy = worldRect.height / svgBounds.height;
+
+        return {
+          x: worldRect.left + item.map.x * sx,
+          y: worldRect.top + item.map.y * sy
+        };
+      }
+
+      function openInfo(item) {
+        updateInfo(item);
+        openId = item.id;
+        phone.classList.add("is-layer-open");
+        centerOnLocation(item);
+
+        const start = markerCenterOnScreen(item);
+        const shell = phone.getBoundingClientRect();
+        const panelStyle = getComputedStyle(infoLayer);
+        const panelRight = parseFloat(panelStyle.right || 0);
+        const panelTop = parseFloat(panelStyle.top || 0);
+        const panelWidth = infoLayer.offsetWidth;
+        const panelHeight = infoLayer.offsetHeight;
+        const target = isWebLayout()
+          ? {
+              x: shell.right - panelRight - panelWidth + 62,
+              y: shell.top + panelTop + 66
+            }
+          : {
+              x: shell.left + 57,
+              y: shell.bottom - panelHeight + 60
+            };
+
+        const floatSize = Math.round(58 + item.ring * 0.42);
+        floatingIcon.style.setProperty("--float-size", `${floatSize}px`);
+        floatingIcon.innerHTML = iconSvg(item.icon);
+        floatingIcon.classList.add("is-visible");
+        floatingIcon.style.left = `${start.x - shell.left}px`;
+        floatingIcon.style.top = `${start.y - shell.top}px`;
+
+        const dx = target.x - start.x;
+        const dy = target.y - start.y;
+
+        floatingIcon.animate(
+          [
+            { transform: "translate(-50%, -50%) scale(.82) rotate(-5deg)", opacity: 0 },
+            { transform: "translate(-50%, -50%) scale(1.08) rotate(2deg)", opacity: 1, offset: 0.22 },
+            { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(1) rotate(0deg)`, opacity: 1 }
+          ],
+          {
+            duration: 720,
+            easing: "cubic-bezier(.18,.92,.2,1)",
+            fill: "forwards"
+          }
+        );
+
+        softCover.hidden = false;
+        requestAnimationFrame(() => {
+          softCover.classList.add("is-open");
+          infoLayer.classList.add("is-open");
+        });
+      }
+
+      function closeLayer() {
+        openId = null;
+        phone.classList.remove("is-layer-open");
+        infoLayer.classList.remove("is-open");
+        softCover.classList.remove("is-open");
+        floatingIcon.classList.remove("is-visible");
+        centerOnLocation(locations[activeIndex]);
+        window.setTimeout(() => {
+          if (!openId) {
+            softCover.hidden = true;
+            floatingIcon.innerHTML = "";
+          }
+        }, 430);
+      }
+
+      function selectById(id, open = false) {
+        const index = locations.findIndex((item) => item.id === id);
+        if (index === -1) return;
+        const wasActive = index === activeIndex;
+        setActive(index);
+        if (open) {
+          window.setTimeout(() => openInfo(locations[activeIndex]), wasActive ? 90 : 820);
+        }
+      }
+
+      renderMarkers();
+      renderButtons();
+
+      strip.addEventListener("click", (event) => {
+        const button = event.target.closest(".city-button");
+        if (!button) return;
+        closeLayer();
+        setActive(Number(button.dataset.index));
+      });
+
+      markersLayer.addEventListener("click", (event) => {
+        const marker = event.target.closest(".map-marker");
+        if (!marker) return;
+        selectById(marker.dataset.location, true);
+      });
+
+      markersLayer.addEventListener("keydown", (event) => {
+        const marker = event.target.closest(".map-marker");
+        if (!marker || (event.key !== "Enter" && event.key !== " ")) return;
+        event.preventDefault();
+        selectById(marker.dataset.location, true);
+      });
+
+      closeInfo.addEventListener("click", closeLayer);
+      softCover.addEventListener("click", closeLayer);
+
+      let startX = 0;
+      let startY = 0;
+
+      document.querySelector(".map-stage").addEventListener("pointerdown", (event) => {
+        startX = event.clientX;
+        startY = event.clientY;
+      });
+
+      document.querySelector(".map-stage").addEventListener("pointerup", (event) => {
+        const dx = event.clientX - startX;
+        const dy = event.clientY - startY;
+        if (Math.abs(dx) > 52 && Math.abs(dx) > Math.abs(dy) * 1.28) {
+          closeLayer();
+          setActive(activeIndex + (dx < 0 ? 1 : -1));
+        }
+      });
+
+      window.addEventListener("resize", () => centerOnLocation(locations[activeIndex]));
+      setActive(0, { skipScroll: true, skipRoute: true });
+    </script>
+  </body>
+</html>
