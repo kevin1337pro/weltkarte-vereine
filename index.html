@@ -3,20 +3,23 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <title>Weltkarte Vereine</title>
+    <title>Ruhrgebiet Regionalkarte</title>
     <style>
       :root {
         color-scheme: light;
-        --paper: #f5f0e4;
-        --paper-deep: #e4d6b7;
-        --ink: #18140f;
-        --muted: #665c4d;
-        --land: #d29a16;
-        --land-soft: #e4b23a;
-        --land-dark: #b47d0b;
-        --water: #fbf7ed;
-        --rule: rgba(24, 20, 15, 0.15);
-        --shadow: rgba(45, 31, 9, 0.28);
+        --paper: #edf3cd;
+        --paper-deep: #cad5b7;
+        --ink: #171a10;
+        --muted: #596044;
+        --district: #d7e797;
+        --district-hot: #c5e54c;
+        --city: #9ec63b;
+        --city-hot: #b6df16;
+        --edge: #fdfef6;
+        --depth: #9da29b;
+        --river: #177db5;
+        --river-dark: #0d638f;
+        --rule: rgba(37, 45, 28, 0.16);
         font-family:
           Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       }
@@ -30,7 +33,7 @@
         width: 100%;
         min-height: 100%;
         margin: 0;
-        background: #d9cfbd;
+        background: #c8d1b2;
       }
 
       body {
@@ -50,8 +53,8 @@
         min-height: 690px;
         overflow: hidden;
         background:
-          linear-gradient(180deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0) 25%),
-          var(--paper);
+          radial-gradient(circle at 50% 18%, rgba(255, 255, 255, 0.82), transparent 38%),
+          linear-gradient(180deg, #f7f8e9 0%, #dfe8c0 44%, #9aa58e 100%);
         isolation: isolate;
       }
 
@@ -62,10 +65,11 @@
         pointer-events: none;
         content: "";
         background-image:
-          linear-gradient(rgba(24, 20, 15, 0.08) 1px, transparent 1px),
-          linear-gradient(90deg, rgba(24, 20, 15, 0.08) 1px, transparent 1px);
-        background-size: 27px 27px;
-        mask-image: linear-gradient(180deg, transparent, #000 11%, #000 88%, transparent);
+          linear-gradient(rgba(255, 255, 255, 0.18) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255, 255, 255, 0.13) 1px, transparent 1px);
+        background-size: 34px 34px;
+        opacity: 0.45;
+        mask-image: linear-gradient(180deg, transparent, #000 8%, #000 92%, transparent);
       }
 
       .map-header {
@@ -82,7 +86,7 @@
       }
 
       .headline {
-        max-width: 245px;
+        max-width: 260px;
         transform-origin: left top;
         transition:
           opacity 360ms ease,
@@ -91,21 +95,21 @@
 
       .eyebrow {
         margin: 0 0 4px;
-        color: #84620e;
+        color: #55720f;
         font-size: 0.72rem;
-        font-weight: 900;
+        font-weight: 950;
         letter-spacing: 0.12em;
         text-transform: uppercase;
       }
 
       h1 {
         margin: 0;
-        color: #11100c;
+        color: #10130b;
         font-family: Georgia, "Times New Roman", serif;
-        font-size: 3.25rem;
+        font-size: 3.05rem;
         font-style: italic;
-        font-weight: 900;
-        line-height: 0.84;
+        font-weight: 950;
+        line-height: 0.85;
       }
 
       .step-pill {
@@ -114,13 +118,13 @@
         min-height: 38px;
         padding: 0 11px;
         place-items: center;
-        border: 1px solid rgba(24, 20, 15, 0.14);
+        border: 1px solid rgba(26, 34, 18, 0.14);
         border-radius: 999px;
-        background: rgba(250, 247, 238, 0.78);
-        box-shadow: 0 12px 34px rgba(43, 31, 13, 0.1);
-        color: #4f4228;
+        background: rgba(253, 254, 246, 0.78);
+        box-shadow: 0 12px 34px rgba(26, 34, 18, 0.1);
+        color: #445022;
         font-size: 0.76rem;
-        font-weight: 900;
+        font-weight: 950;
         pointer-events: auto;
         backdrop-filter: blur(12px);
         transition:
@@ -129,7 +133,7 @@
       }
 
       .phone.is-layer-open .headline {
-        opacity: 0.28;
+        opacity: 0.24;
         transform: translateY(-8px) scale(0.9);
       }
 
@@ -144,10 +148,6 @@
         z-index: 1;
         overflow: hidden;
         touch-action: pan-y;
-        background:
-          radial-gradient(circle at 52% 43%, rgba(226, 176, 48, 0.19), transparent 33%),
-          radial-gradient(circle at 24% 62%, rgba(151, 190, 180, 0.18), transparent 35%),
-          var(--water);
       }
 
       .map-stage::after {
@@ -156,7 +156,7 @@
         height: 190px;
         pointer-events: none;
         content: "";
-        background: linear-gradient(180deg, rgba(251, 247, 237, 0.96), rgba(251, 247, 237, 0.78) 48%, rgba(251, 247, 237, 0));
+        background: linear-gradient(180deg, rgba(247, 248, 233, 0.94), rgba(247, 248, 233, 0.62) 48%, rgba(247, 248, 233, 0));
       }
 
       .map-world {
@@ -166,8 +166,8 @@
         position: absolute;
         top: 0;
         left: 0;
-        width: 1480px;
-        height: 920px;
+        width: 1600px;
+        height: 980px;
         transform:
           translate3d(var(--map-x), var(--map-y), 0)
           scale(var(--map-scale));
@@ -176,88 +176,97 @@
         will-change: transform;
       }
 
-      .graticule {
-        fill: none;
-        stroke: rgba(24, 20, 15, 0.1);
-        stroke-width: 1;
-        stroke-dasharray: 8 12;
+      .region-shadow {
+        fill: rgba(33, 39, 29, 0.22);
+        filter: blur(16px);
+        transform: translate(16px, 26px);
       }
 
-      .continent,
-      .island {
-        fill: var(--land);
-        stroke: rgba(101, 67, 7, 0.24);
+      .region-depth {
+        fill: var(--depth);
+        stroke: #777d78;
         stroke-linejoin: round;
-        stroke-width: 2.4;
+        stroke-width: 2;
+        transform: translate(11px, 16px);
       }
 
-      .continent.alt,
-      .island.alt {
-        fill: var(--land-soft);
+      .region-top {
+        fill: var(--district);
+        stroke: var(--edge);
+        stroke-linejoin: round;
+        stroke-width: 4.2;
+        filter: url(#topLight);
+        transition:
+          fill 220ms ease,
+          stroke-width 220ms ease;
       }
 
-      .coast-detail {
+      .region-top.city {
+        fill: var(--city);
+      }
+
+      .region-top.hot {
+        fill: var(--district-hot);
+      }
+
+      .region-top.city.hot {
+        fill: var(--city-hot);
+      }
+
+      .region-top.is-active {
+        stroke-width: 7;
+      }
+
+      .river {
         fill: none;
-        stroke: rgba(118, 78, 9, 0.28);
+        stroke: var(--river);
         stroke-linecap: round;
-        stroke-width: 2.2;
+        stroke-linejoin: round;
+        stroke-width: 9;
+        filter: drop-shadow(0 3px 0 rgba(255, 255, 255, 0.68)) drop-shadow(0 6px 5px rgba(0, 45, 72, 0.24));
       }
 
-      .terrain {
-        fill: none;
-        stroke: rgba(55, 38, 15, 0.2);
-        stroke-linecap: round;
+      .river.thin {
+        stroke-width: 4.5;
+      }
+
+      .river-label {
+        fill: #1672a8;
+        font-size: 24px;
+        font-weight: 850;
+        letter-spacing: 0;
+      }
+
+      .area-label {
+        fill: rgba(36, 45, 28, 0.34);
+        font-size: 48px;
+        font-weight: 300;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .city-label {
+        fill: #10130b;
+        font-size: 24px;
+        font-weight: 950;
+        paint-order: stroke;
+        stroke: rgba(253, 254, 246, 0.88);
+        stroke-width: 5;
+        text-anchor: middle;
+      }
+
+      .mini-map {
+        opacity: 0.92;
+      }
+
+      .mini-map path {
+        fill: #cfdf8c;
+        stroke: rgba(255, 255, 255, 0.84);
         stroke-width: 3;
       }
 
-      .watermark-label {
-        fill: rgba(24, 20, 15, 0.13);
-        font-family: Georgia, "Times New Roman", serif;
-        font-size: 112px;
-        font-style: italic;
-        font-weight: 900;
-        letter-spacing: 0;
-        pointer-events: none;
-      }
-
-      .continent-label {
-        fill: #17130d;
-        font-family: Georgia, "Times New Roman", serif;
-        font-size: 36px;
-        font-style: italic;
-        font-weight: 900;
-        letter-spacing: 0;
-        paint-order: stroke;
-        stroke: rgba(245, 240, 228, 0.78);
-        stroke-width: 5px;
-      }
-
-      .project-note {
-        fill: #443a2d;
-        font-size: 12px;
-        font-weight: 760;
-        opacity: 0.74;
-      }
-
-      .route-line {
-        fill: none;
-        stroke: rgba(24, 20, 15, 0.22);
-        stroke-dasharray: 10 13;
-        stroke-linecap: round;
-        stroke-width: 2.2;
-      }
-
-      .active-route {
-        fill: none;
-        stroke: rgba(21, 17, 13, 0.74);
-        stroke-linecap: round;
-        stroke-width: 4.5;
-        filter: drop-shadow(0 5px 8px rgba(72, 44, 4, 0.18));
-      }
-
-      .route-dot {
-        fill: #15110c;
-        opacity: 0;
+      .mini-map .mini-hot {
+        fill: #e72d23;
       }
 
       .map-marker {
@@ -268,9 +277,9 @@
       }
 
       .map-marker .tap-ring {
-        fill: rgba(251, 247, 237, 0.72);
-        stroke: rgba(24, 20, 15, 0.2);
-        stroke-width: 2.3;
+        fill: rgba(253, 254, 246, 0.78);
+        stroke: rgba(37, 45, 28, 0.24);
+        stroke-width: 2.6;
         transition:
           fill 220ms ease,
           stroke 220ms ease,
@@ -278,38 +287,39 @@
       }
 
       .map-marker .halo {
-        fill: rgba(255, 246, 217, 0.28);
-        stroke: rgba(255, 246, 217, 0.52);
+        fill: rgba(244, 255, 167, 0.28);
+        stroke: rgba(255, 255, 255, 0.7);
         stroke-width: 2;
         opacity: 0.82;
       }
 
       .map-marker .marker-icon {
-        fill: #15110c;
+        fill: #10130b;
         transition: transform 260ms ease;
       }
 
       .map-marker text {
-        fill: #17130d;
-        font-size: 15px;
-        font-weight: 900;
+        fill: #11140c;
+        font-size: 16px;
+        font-weight: 950;
         paint-order: stroke;
-        stroke: rgba(245, 240, 228, 0.9);
-        stroke-width: 4.4px;
+        stroke: rgba(253, 254, 246, 0.92);
+        stroke-width: 4.8px;
+        text-anchor: middle;
       }
 
       .map-marker .marker-meta {
-        fill: rgba(24, 20, 15, 0.68);
+        fill: rgba(37, 45, 28, 0.72);
         font-size: 10px;
-        font-weight: 900;
+        font-weight: 950;
         letter-spacing: 0.14em;
         text-transform: uppercase;
       }
 
       .map-marker[aria-current="true"] .tap-ring {
-        fill: #fff8e5;
-        stroke: rgba(24, 20, 15, 0.46);
-        stroke-width: 3;
+        fill: #fffdec;
+        stroke: rgba(37, 45, 28, 0.56);
+        stroke-width: 3.2;
       }
 
       .map-marker[aria-current="true"] .marker-icon {
@@ -327,7 +337,7 @@
 
       @keyframes pulse {
         0% {
-          opacity: 0.75;
+          opacity: 0.8;
           transform: scale(0.9);
         }
 
@@ -337,6 +347,27 @@
         }
       }
 
+      .route-line {
+        fill: none;
+        stroke: rgba(23, 125, 181, 0.45);
+        stroke-dasharray: 10 13;
+        stroke-linecap: round;
+        stroke-width: 3;
+      }
+
+      .active-route {
+        fill: none;
+        stroke: rgba(16, 19, 11, 0.76);
+        stroke-linecap: round;
+        stroke-width: 4.5;
+        filter: drop-shadow(0 5px 8px rgba(37, 45, 28, 0.24));
+      }
+
+      .route-dot {
+        fill: #10130b;
+        opacity: 0;
+      }
+
       .floating-icon {
         position: absolute;
         z-index: 11;
@@ -344,13 +375,13 @@
         width: var(--float-size, 70px);
         height: var(--float-size, 70px);
         place-items: center;
-        border: 1px solid rgba(24, 20, 15, 0.17);
+        border: 1px solid rgba(37, 45, 28, 0.17);
         border-radius: 22px;
         background:
-          radial-gradient(circle at 28% 24%, rgba(255, 255, 255, 0.9), transparent 42%),
-          #fff7e4;
-        box-shadow: 0 18px 58px rgba(43, 31, 13, 0.28);
-        color: #14110d;
+          radial-gradient(circle at 28% 24%, rgba(255, 255, 255, 0.95), transparent 42%),
+          #fffdec;
+        box-shadow: 0 18px 58px rgba(37, 45, 28, 0.28);
+        color: #10130b;
         opacity: 0;
         pointer-events: none;
         transform: translate(-50%, -50%) scale(0.92);
@@ -388,13 +419,13 @@
         display: grid;
         grid-template-columns: 34px minmax(0, 1fr);
         align-items: center;
-        min-width: 160px;
+        min-width: 162px;
         min-height: 58px;
         padding: 9px 12px 9px 10px;
-        border: 1px solid rgba(24, 20, 15, 0.13);
+        border: 1px solid rgba(37, 45, 28, 0.13);
         border-radius: 8px;
-        background: rgba(255, 250, 236, 0.9);
-        box-shadow: 0 12px 36px rgba(43, 31, 13, 0.12);
+        background: rgba(253, 254, 246, 0.9);
+        box-shadow: 0 12px 36px rgba(37, 45, 28, 0.12);
         color: var(--ink);
         cursor: pointer;
         scroll-snap-align: center;
@@ -411,7 +442,7 @@
         min-width: 0;
         overflow: hidden;
         font-size: 0.83rem;
-        font-weight: 900;
+        font-weight: 950;
         line-height: 1.05;
         text-align: left;
         text-overflow: ellipsis;
@@ -424,19 +455,19 @@
         overflow: hidden;
         color: var(--muted);
         font-size: 0.66rem;
-        font-weight: 760;
+        font-weight: 780;
         text-overflow: ellipsis;
         white-space: nowrap;
       }
 
       .city-button.is-active {
-        border-color: rgba(24, 20, 15, 0.34);
-        background: #15120e;
-        color: #fff5dc;
+        border-color: rgba(37, 45, 28, 0.34);
+        background: #12150c;
+        color: #fffdec;
       }
 
       .city-button.is-active small {
-        color: rgba(255, 245, 220, 0.72);
+        color: rgba(255, 253, 236, 0.72);
       }
 
       .map-legend {
@@ -448,27 +479,27 @@
         align-items: center;
         gap: 7px;
         padding: 8px 10px;
-        border: 1px solid rgba(24, 20, 15, 0.12);
+        border: 1px solid rgba(37, 45, 28, 0.12);
         border-radius: 8px;
-        background: rgba(255, 250, 236, 0.75);
-        color: rgba(24, 20, 15, 0.7);
+        background: rgba(253, 254, 246, 0.75);
+        color: rgba(37, 45, 28, 0.72);
         font-size: 0.68rem;
-        font-weight: 900;
+        font-weight: 950;
         backdrop-filter: blur(10px);
       }
 
       .map-legend span {
         width: 26px;
-        height: 2px;
+        height: 3px;
         border-radius: 99px;
-        background: repeating-linear-gradient(90deg, #15110c 0 7px, transparent 7px 12px);
+        background: var(--river);
       }
 
       .soft-cover {
         position: absolute;
         inset: 0;
         z-index: 9;
-        background: rgba(40, 29, 12, 0.18);
+        background: rgba(31, 39, 24, 0.18);
         opacity: 0;
         pointer-events: none;
         transition: opacity 420ms ease;
@@ -487,10 +518,10 @@
         padding: 26px 20px max(28px, env(safe-area-inset-bottom));
         border-radius: 28px 28px 0 0;
         background:
-          radial-gradient(circle at 16% 8%, rgba(226, 178, 58, 0.18), transparent 34%),
-          linear-gradient(180deg, rgba(255, 255, 255, 0.58), rgba(255, 255, 255, 0) 46%),
-          #fff7e5;
-        box-shadow: 0 -24px 86px rgba(43, 31, 13, 0.34);
+          radial-gradient(circle at 16% 8%, rgba(197, 229, 76, 0.2), transparent 34%),
+          linear-gradient(180deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0) 46%),
+          #fffdec;
+        box-shadow: 0 -24px 86px rgba(37, 45, 28, 0.34);
         transform: translateY(105%);
         transition: transform 640ms cubic-bezier(0.18, 0.92, 0.2, 1);
         will-change: transform;
@@ -507,7 +538,7 @@
         width: 46px;
         height: 4px;
         border-radius: 999px;
-        background: rgba(24, 20, 15, 0.2);
+        background: rgba(37, 45, 28, 0.22);
         content: "";
         transform: translateX(-50%);
       }
@@ -526,7 +557,7 @@
 
       .info-kicker {
         margin: 6px 0 5px;
-        color: #85620f;
+        color: #55720f;
         font-size: 0.72rem;
         font-weight: 950;
         letter-spacing: 0.1em;
@@ -537,10 +568,15 @@
         margin: 0;
         overflow-wrap: anywhere;
         font-family: Georgia, "Times New Roman", serif;
-        font-size: 2.6rem;
+        font-size: 2.12rem;
         font-style: italic;
-        font-weight: 900;
+        font-weight: 950;
         line-height: 0.92;
+      }
+
+      .info-title.is-long {
+        font-size: 1.82rem;
+        line-height: 0.98;
       }
 
       .close-button {
@@ -549,9 +585,9 @@
         height: 38px;
         padding: 0;
         place-items: center;
-        border: 1px solid rgba(24, 20, 15, 0.14);
+        border: 1px solid rgba(37, 45, 28, 0.14);
         border-radius: 50%;
-        background: #f1e5cb;
+        background: #edf3cd;
         color: var(--ink);
         cursor: pointer;
       }
@@ -570,9 +606,9 @@
 
       .info-body p {
         margin: 0;
-        color: #453d33;
+        color: #3f4732;
         font-size: 1rem;
-        font-weight: 720;
+        font-weight: 760;
         line-height: 1.52;
       }
 
@@ -586,9 +622,9 @@
       .fact {
         min-height: 82px;
         padding: 12px;
-        border: 1px solid rgba(24, 20, 15, 0.1);
+        border: 1px solid rgba(37, 45, 28, 0.1);
         border-radius: 8px;
-        background: rgba(255, 255, 255, 0.42);
+        background: rgba(255, 255, 255, 0.46);
       }
 
       .fact strong {
@@ -601,9 +637,9 @@
       }
 
       .fact span {
-        color: #504638;
+        color: #4d563c;
         font-size: 0.87rem;
-        font-weight: 780;
+        font-weight: 820;
         line-height: 1.28;
       }
 
@@ -616,8 +652,8 @@
         padding: 0 14px;
         border: 0;
         border-radius: 8px;
-        background: #191510;
-        color: #fff6e1;
+        background: #12150c;
+        color: #fffdec;
         cursor: pointer;
         font-weight: 950;
         text-decoration: none;
@@ -636,7 +672,7 @@
       @media (min-width: 431px) {
         .phone {
           height: min(100svh, 860px);
-          box-shadow: 0 24px 80px rgba(50, 41, 25, 0.28);
+          box-shadow: 0 24px 80px rgba(37, 45, 28, 0.28);
         }
       }
 
@@ -669,27 +705,27 @@
         }
 
         h1 {
-          font-size: 4.75rem;
+          font-size: 4.65rem;
         }
 
         .phone.is-layer-open .headline {
-          opacity: 0.34;
+          opacity: 0.32;
           transform: translateY(-10px) scale(0.94);
         }
 
         .map-stage::after {
           height: 230px;
-          background: linear-gradient(180deg, rgba(251, 247, 237, 0.92), rgba(251, 247, 237, 0.54) 54%, rgba(251, 247, 237, 0));
+          background: linear-gradient(180deg, rgba(247, 248, 233, 0.92), rgba(247, 248, 233, 0.54) 54%, rgba(247, 248, 233, 0));
         }
 
         .city-strip {
-          top: 260px;
+          top: 258px;
           right: auto;
           bottom: auto;
           left: 34px;
           flex-direction: column;
           width: 268px;
-          max-height: calc(100svh - 362px);
+          max-height: calc(100svh - 360px);
           overflow-x: hidden;
           overflow-y: auto;
           padding: 0 4px 4px 0;
@@ -701,7 +737,7 @@
           min-width: 0;
           min-height: 62px;
           grid-template-columns: 38px minmax(0, 1fr);
-          background: rgba(255, 250, 236, 0.78);
+          background: rgba(253, 254, 246, 0.78);
         }
 
         .map-legend {
@@ -711,7 +747,7 @@
         }
 
         .soft-cover {
-          background: linear-gradient(90deg, rgba(40, 29, 12, 0.04), rgba(40, 29, 12, 0.2));
+          background: linear-gradient(90deg, rgba(31, 39, 24, 0.04), rgba(31, 39, 24, 0.2));
         }
 
         .info-layer {
@@ -721,7 +757,7 @@
           overflow-y: auto;
           padding: 30px 24px 28px;
           border-radius: 24px;
-          box-shadow: 0 22px 82px rgba(43, 31, 13, 0.28);
+          box-shadow: 0 22px 82px rgba(37, 45, 28, 0.28);
           transform: translateX(calc(100% + 48px));
         }
 
@@ -750,6 +786,10 @@
           font-size: 3rem;
         }
 
+        .info-title.is-long {
+          font-size: 2.42rem;
+        }
+
         .info-body p {
           font-size: 1.04rem;
         }
@@ -766,9 +806,9 @@
         }
 
         .city-strip {
+          top: 258px;
           left: 42px;
           width: 296px;
-          top: 258px;
         }
 
         .city-button {
@@ -795,7 +835,7 @@
         }
 
         h1 {
-          font-size: 2.75rem;
+          font-size: 2.6rem;
         }
 
         .map-legend {
@@ -817,12 +857,12 @@
         }
 
         h1 {
-          font-size: 4rem;
+          font-size: 3.9rem;
         }
 
         .city-strip {
-          top: 190px;
-          max-height: calc(100svh - 268px);
+          top: 188px;
+          max-height: calc(100svh - 266px);
         }
 
         .info-layer {
@@ -847,135 +887,106 @@
     </style>
   </head>
   <body>
-    <main class="phone" aria-label="Interaktive Weltkarte">
+    <main class="phone" aria-label="Interaktive Ruhrgebiet-Karte">
       <header class="map-header">
         <div class="headline">
-          <p class="eyebrow">Vereine weltweit</p>
-          <h1>Weltweit für Zukunft</h1>
+          <p class="eyebrow">Regionalkarte NRW</p>
+          <h1>Ruhrgebiet in 3D</h1>
         </div>
         <div class="step-pill" aria-live="polite">
-          <span id="stepCount">01 / 09</span>
+          <span id="stepCount">01 / 10</span>
         </div>
       </header>
 
-      <section class="map-stage" aria-label="Karte mit Standorten">
-        <svg class="map-world" viewBox="0 0 1480 920" role="img" aria-label="Detaillierte stilisierte Weltkarte">
+      <section class="map-stage" aria-label="Ruhrgebiet mit Standorten">
+        <svg class="map-world" viewBox="0 0 1600 980" role="img" aria-label="Stilisierte 3D-Regionalkarte des Ruhrgebiets">
           <defs>
+            <filter id="topLight">
+              <feDropShadow dx="-2" dy="-3" stdDeviation="2" flood-color="#ffffff" flood-opacity=".56" />
+              <feDropShadow dx="3" dy="5" stdDeviation="3" flood-color="#45503d" flood-opacity=".18" />
+            </filter>
+            <filter id="paper-noise">
+              <feTurbulence baseFrequency=".75" numOctaves="2" seed="17" type="fractalNoise" />
+              <feColorMatrix type="saturate" values="0" />
+              <feComponentTransfer>
+                <feFuncA type="table" tableValues="0 .12" />
+              </feComponentTransfer>
+            </filter>
+            <g id="icon-leaf">
+              <path d="M-6 28h12V8c20-2 32-17 34-40C14-33-3-22-7-7c-9-14-27-18-42-6 8 18 24 25 43 22Z" />
+            </g>
+            <g id="icon-people">
+              <circle cx="-20" cy="-12" r="11" />
+              <circle cx="20" cy="-12" r="11" />
+              <circle cx="0" cy="-20" r="12" />
+              <path d="M-38 28c3-19 14-29 29-29 8 0 15 3 19 8 4-5 11-8 19-8 15 0 26 10 29 29Z" />
+            </g>
+            <g id="icon-food">
+              <path d="M-25-31h7v28h-7Zm14 0h7v28h-7ZM3-31h7v28H3Z" />
+              <path d="M-25-4H10c0 17-8 27-18 30v16h-9V26C-29 23-36 13-36-4Z" />
+              <path d="M25-32c12 9 16 25 12 39-2 6-6 12-12 16v19h-9v-74Z" />
+            </g>
+            <g id="icon-water">
+              <path d="M-22 10c10-27 27-41 27-41s18 14 27 41c4 16-8 30-27 30S-26 26-22 10Z" />
+              <path d="M-8 13c3 7 9 11 19 11" fill="none" stroke="#fffdec" stroke-width="5" stroke-linecap="round" opacity=".7" />
+            </g>
+            <g id="icon-health">
+              <path d="M-24-7h17v-17H7v17h17V7H7v17H-7V7h-17Z" />
+            </g>
             <g id="icon-education">
               <path d="M0-24 31-10 0 4-31-10Z" />
               <path d="M-19-4v18c9 8 29 8 38 0V-4L0 5Z" />
               <path d="M26-8v20" stroke="currentColor" stroke-width="5" stroke-linecap="round" />
               <circle cx="26" cy="17" r="4" />
             </g>
-            <g id="icon-water">
-              <path d="M-21 10c9-26 26-40 26-40s17 14 26 40c4 15-7 29-26 29S-25 25-21 10Z" />
-              <path d="M-8 12c3 7 9 11 18 11" fill="none" stroke="#fff6e1" stroke-width="5" stroke-linecap="round" opacity=".68" />
-            </g>
-            <g id="icon-health">
-              <path d="M-23-6h16v-16H7v16h16V8H7v16H-7V8h-16Z" />
-            </g>
             <g id="icon-home">
               <path d="M-30-1 0-27 30-1h-8v30h-17V9h-10v20h-17V-1Z" />
             </g>
-            <g id="icon-nature">
-              <path d="M-5 28h10V6c16-2 27-13 30-34C12-30-2-22-5-7c-6-15-21-21-38-12C-34-1-20 8-5 7Z" />
-            </g>
-            <g id="icon-community">
-              <circle cx="-18" cy="-12" r="11" />
-              <circle cx="18" cy="-12" r="11" />
-              <circle cx="0" cy="-20" r="12" />
-              <path d="M-36 27c2-19 13-29 27-29 8 0 14 3 18 8 4-5 10-8 18-8 14 0 25 10 27 29Z" />
-            </g>
-            <g id="icon-food">
-              <path d="M-24-30h7v27h-7Zm13 0h7v27h-7ZM2-30h7v27H2Z" />
-              <path d="M-24-4H9c0 16-7 25-17 28v16h-8V24C-27 21-34 12-34-4Z" />
-              <path d="M24-31c12 9 16 24 11 38-2 6-5 11-11 15v18h-8v-72Z" />
-            </g>
-            <g id="icon-energy">
+            <g id="icon-bolt">
               <path d="M4-34-24 5h20l-8 35L26-9H6Z" />
             </g>
-            <filter id="paper-noise">
-              <feTurbulence baseFrequency=".8" numOctaves="2" seed="9" type="fractalNoise" />
-              <feColorMatrix type="saturate" values="0" />
-              <feComponentTransfer>
-                <feFuncA type="table" tableValues="0 .13" />
-              </feComponentTransfer>
-            </filter>
           </defs>
 
-          <rect width="1480" height="920" fill="#fbf7ed" />
-          <rect width="1480" height="920" filter="url(#paper-noise)" opacity=".52" />
+          <rect width="1600" height="980" fill="transparent" />
+          <rect width="1600" height="980" filter="url(#paper-noise)" opacity=".5" />
 
-          <g class="graticule">
-            <path d="M120 80v760M310 70v780M500 70v780M690 70v780M880 70v780M1070 70v780M1260 80v760" />
-            <path d="M70 175h1340M60 330h1360M70 485h1340M80 640h1320M110 795h1260" />
+          <g id="regionShadows"></g>
+          <g id="regionDepths"></g>
+          <g id="regionTops"></g>
+
+          <g id="riverLayer">
+            <path class="river" d="M133 182C117 231 157 260 205 260C250 260 267 246 298 272C330 300 294 356 337 392C386 432 352 487 312 506C265 529 296 592 350 603C406 615 405 675 363 707C320 739 334 790 389 817" />
+            <path class="river" d="M438 827C512 772 591 805 647 755C700 708 659 658 718 638C789 614 807 678 876 644C929 618 906 559 959 543C1005 530 1034 577 1081 552C1138 522 1177 560 1240 522C1302 485 1337 496 1400 445" />
+            <path class="river" d="M362 305C475 300 527 315 640 283C727 259 782 250 856 185C902 145 942 177 1002 190C1088 208 1147 255 1237 260C1328 265 1358 215 1437 220" />
+            <path class="river thin" d="M285 455C377 440 463 490 560 498C682 509 738 470 846 431C970 386 1097 404 1198 350C1270 311 1365 286 1458 282" />
+            <path class="river thin" d="M503 575C618 607 710 596 798 556C893 514 908 430 1016 390C1093 361 1140 320 1186 263" />
+            <path class="river thin" d="M1100 222C1074 275 1026 324 1011 382C997 433 1028 478 1005 532" />
+            <text class="river-label" x="210" y="247" transform="rotate(-6 210 247)">Rhein</text>
+            <text class="river-label" x="575" y="281" transform="rotate(-12 575 281)">Lippe</text>
+            <text class="river-label" x="701" y="720" transform="rotate(-15 701 720)">Ruhr</text>
+            <text class="river-label" x="575" y="502" transform="rotate(7 575 502)">Rhein-Herne-Kanal</text>
+            <text class="river-label" x="980" y="430" transform="rotate(-22 980 430)">Emscher</text>
+            <text class="river-label" x="1265" y="301" transform="rotate(-21 1265 301)">Datteln-Hamm-Kanal</text>
           </g>
 
-          <text class="watermark-label" x="50" y="250">Weltweit</text>
-          <text class="watermark-label" x="960" y="825">Zukunft</text>
-
-          <g id="landLayer">
-            <path class="continent" d="M104 230c24-76 89-134 172-149 57-10 91 14 136 8 62-8 122 19 158 72 29 44 25 93 50 122 24 29 76 28 96 73 22 49-11 94 5 139 10 30 48 45 60 79 18 49-17 99-70 101-50 2-80-40-125-43-45-4-65 32-105 23-35-8-46-43-87-43-37-1-57 27-96 17-43-11-59-57-45-97 12-35-1-58-38-72-54-20-84-72-72-128 7-32-55-43-39-103Z" />
-            <path class="continent alt" d="M310 540c50-25 121-3 153 48 36 57 19 130 55 179 18 24 17 58-5 84-21 26-58 34-88 16-25-15-26-47-48-69-24-24-64-22-85-49-22-30-6-70-18-103-13-35-43-48-37-77 4-18 25-20 73-29Z" />
-            <path class="continent alt" d="M650 285c38-54 113-70 170-39 45 24 60 74 107 82 50 8 88-34 153-22 65 12 91 69 152 86 58 16 102-10 144 24 48 39 48 111 9 157-37 43-100 46-153 35-63-13-103 9-151 33-57 30-123 12-153-35-21-32-55-44-95-32-51 15-98-6-111-51-12-44 25-79 3-114-18-29-71-30-88-69-8-19-4-38 13-55Z" />
-            <path class="continent" d="M749 494c62 6 107 50 122 111 16 67-10 140-57 190-34 37-59 78-90 75-33-3-37-58-76-89-37-30-79-58-74-112 4-48 43-59 64-96 23-41 57-83 111-79Z" />
-            <path class="continent" d="M1042 237c77-66 188-66 257-6 38 33 35 78-5 101-38 22-89-2-135 21-49 25-80 78-127 50-42-25-31-92 10-166Z" />
-            <path class="continent alt" d="M1187 626c76-41 182-21 241 47 38 45 29 104-26 123-43 15-76-13-119-1-53 15-75 63-121 46-52-20-51-92-8-130 33-29-10-65 33-85Z" />
-            <path class="continent" d="M1243 215c63-26 142-9 178 40 25 34 11 74-31 85-33 9-62-12-97-3-46 12-71 49-108 25-39-25-26-81 27-117 25-17 6-24 31-30Z" />
-            <path class="continent alt" d="M867 767c42-2 74 23 76 55 2 30-28 54-72 55-42 1-72-21-75-51-4-34 27-57 71-59Z" />
+          <g id="areaLabels">
+            <text class="area-label" x="700" y="202">Kreis Recklinghausen</text>
+            <text class="area-label" x="1154" y="290">Kreis Unna</text>
+            <text class="area-label" x="879" y="840">Ennepe-Ruhr-Kreis</text>
+            <text class="area-label" x="1230" y="598">Unna</text>
           </g>
 
-          <g id="islandLayer">
-            <path class="island alt" d="M602 258c22-13 52-11 65 7 11 15 2 35-20 42-24 8-55-1-65-18-7-12 0-22 20-31Z" />
-            <path class="island" d="M615 330c17-9 38-4 45 9 7 14-4 29-24 31-20 2-35-8-36-22-1-7 4-13 15-18Z" />
-            <path class="island" d="M653 355c13-6 29-3 34 8 5 10-5 22-20 23-14 1-25-8-24-18 1-6 4-10 10-13Z" />
-            <path class="island alt" d="M947 635c19-11 46-6 56 10 9 15-2 34-24 37-22 3-41-8-42-24 0-8 3-15 10-23Z" />
-            <path class="island" d="M1006 669c12-9 30-7 38 3 8 11 1 25-15 28-16 3-30-4-31-16-1-5 2-10 8-15Z" />
-            <path class="island alt" d="M1077 688c18-12 44-8 53 9 8 16-3 35-26 38-22 2-39-10-38-27 0-8 3-14 11-20Z" />
-            <path class="island" d="M1188 733c21-13 50-9 60 10 9 18-6 39-31 39-24 1-44-15-42-32 1-7 5-12 13-17Z" />
-            <path class="island alt" d="M1294 587c22-9 51-1 60 17 8 16-7 32-31 32-22 0-39-12-39-27 0-9 3-16 10-22Z" />
-            <path class="island" d="M1339 620c17-7 36 0 41 13 5 14-8 27-27 24-18-2-29-14-24-25 2-5 5-9 10-12Z" />
-            <path class="island alt" d="M129 169c17-16 45-19 61-6 16 12 11 33-11 42-23 10-50 3-59-12-5-8-2-16 9-24Z" />
-            <path class="island" d="M231 119c20-15 51-12 65 5 14 18 1 41-26 44-25 3-48-11-49-29 0-8 3-14 10-20Z" />
-            <path class="island" d="M194 778c25-14 59-10 71 11 12 20-5 45-35 47-29 2-53-15-53-37 0-8 6-15 17-21Z" />
-            <path class="island alt" d="M1326 830c22-12 53-7 64 11 11 18-5 39-32 41-26 2-48-14-48-34 0-7 5-13 16-18Z" />
-          </g>
+          <g id="cityLabels"></g>
 
-          <g id="detailLayer">
-            <path class="coast-detail" d="M147 266c38-36 82-48 132-35M265 113c30 20 72 24 123 12M418 170c53 16 86 53 96 110M238 422c56 9 101 36 131 83M402 611c38 11 65 34 82 70M660 317c45-32 94-40 150-22M852 347c42 36 93 52 154 49M1034 367c70 14 135 29 196 44M720 594c55 8 95 36 118 83M806 747c-27 33-50 68-69 105M1109 279c48-27 99-35 153-20M1223 676c54-16 102-4 147 35" />
-            <path class="terrain" d="M246 303c38 0 70 14 95 43M396 256c32 18 53 44 63 77M358 719c30 10 54 31 72 64M790 417c35 23 61 54 80 94M751 647c30 15 52 39 66 72M992 442c45 15 83 42 114 82M1190 516c49 11 93 32 132 65" />
-          </g>
-
-          <g id="labelLayer">
-            <text class="continent-label" x="210" y="353" transform="rotate(-21 210 353)">Nordamerika</text>
-            <text class="continent-label" x="405" y="704" transform="rotate(68 405 704)">Südamerika</text>
-            <text class="continent-label" x="790" y="595" transform="rotate(-8 790 595)">Afrika</text>
-            <text class="continent-label" x="835" y="365" transform="rotate(8 835 365)">Europa</text>
-            <text class="continent-label" x="1110" y="501" transform="rotate(7 1110 501)">Asien</text>
-            <text class="continent-label" x="1233" y="792" transform="rotate(-16 1233 792)">Ozeanien</text>
-
-            <text class="project-note" x="205" y="198">Kanada</text>
-            <text class="project-note" x="206" y="216">Naturprojekt</text>
-            <text class="project-note" x="290" y="361">Mexiko</text>
-            <text class="project-note" x="290" y="379">Werkstatt</text>
-            <text class="project-note" x="384" y="566">Peru</text>
-            <text class="project-note" x="384" y="584">Food-Lab</text>
-            <text class="project-note" x="505" y="630">Brasilien</text>
-            <text class="project-note" x="505" y="648">Wasserstation</text>
-            <text class="project-note" x="706" y="304">Portugal</text>
-            <text class="project-note" x="706" y="322">Health Hub</text>
-            <text class="project-note" x="710" y="694">Kenia</text>
-            <text class="project-note" x="710" y="712">Schule</text>
-            <text class="project-note" x="1040" y="430">Nepal</text>
-            <text class="project-note" x="1040" y="448">Kinderhaus</text>
-            <text class="project-note" x="1088" y="626">Malaysia</text>
-            <text class="project-note" x="1088" y="644">Community</text>
-            <text class="project-note" x="1217" y="724">Australien</text>
-            <text class="project-note" x="1217" y="742">Solar-Lab</text>
+          <g class="mini-map" transform="translate(1268 706) scale(.62)">
+            <path d="M177 24 260 42 309 91 302 164 342 231 313 307 228 330 176 291 111 313 55 254 68 175 26 121 71 61Z" />
+            <path class="mini-hot" d="M112 180 154 159 204 173 217 213 178 244 130 231Z" />
+            <circle cx="166" cy="204" r="8" fill="#1d2a13" />
+            <text x="72" y="372" fill="#1d2a13" font-size="22" font-weight="900">Nordrhein-Westfalen</text>
           </g>
 
           <g id="routeLayer">
-            <path class="route-line" d="M238 265C315 290 247 378 312 398C370 416 354 545 407 601C456 649 484 644 503 676C592 622 625 409 713 350C760 423 725 541 770 617C895 575 926 479 1060 472C1105 534 1069 630 1114 665C1182 674 1205 730 1245 770" />
+            <path class="route-line" d="M235 322C386 405 414 581 540 585C638 588 689 501 785 485C901 467 966 554 1054 485C1164 399 1311 461 1426 335" />
             <path class="active-route" id="activeRoute" d="" />
             <circle class="route-dot" id="routeDot" r="8" />
           </g>
@@ -984,7 +995,7 @@
         </svg>
       </section>
 
-      <div class="map-legend" aria-hidden="true"><span></span> Gleiten</div>
+      <div class="map-legend" aria-hidden="true"><span></span> Flüsse und Kanäle</div>
       <div class="soft-cover" id="softCover" hidden></div>
       <div class="floating-icon" id="floatingIcon" aria-hidden="true"></div>
 
@@ -994,8 +1005,8 @@
         <div class="info-top">
           <div class="info-icon-spacer" aria-hidden="true"></div>
           <div>
-            <p class="info-kicker" id="infoKicker">Projekt</p>
-            <h2 class="info-title" id="infoTitle">Vancouver</h2>
+            <p class="info-kicker" id="infoKicker">Region</p>
+            <h2 class="info-title" id="infoTitle">Duisburg</h2>
           </div>
           <button class="close-button" type="button" id="closeInfo" aria-label="Infobereich schließen">
             <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -1011,7 +1022,7 @@
               <span id="infoFocus"></span>
             </div>
             <div class="fact">
-              <strong>Region</strong>
+              <strong>Raum</strong>
               <span id="infoRegion"></span>
             </div>
           </div>
@@ -1026,138 +1037,204 @@
     </main>
 
     <script>
+      const regions = [
+        { id: "xanten", name: "Xanten", type: "district", hot: false, label: [172, 326], d: "M126 171 177 92 287 42 363 97 344 173 402 224 354 288 270 280 233 348 154 336 105 274Z" },
+        { id: "hamminkeln", name: "Hamminkeln", type: "district", hot: false, label: [357, 170], d: "M286 42 390 82 470 78 534 134 546 226 470 265 398 224 344 173 363 97Z" },
+        { id: "wesel", name: "Wesel", type: "district", hot: false, label: [354, 292], d: "M354 288 402 224 470 265 546 226 615 276 582 356 493 366 434 412 365 371Z" },
+        { id: "sonbeck", name: "Sonsbeck", type: "district", hot: false, label: [145, 420], d: "M105 274 154 336 233 348 224 438 164 486 93 444 67 364Z" },
+        { id: "alpen", name: "Alpen", type: "district", hot: false, label: [238, 492], d: "M224 438 270 280 354 288 365 371 326 454 352 533 278 567 205 532 164 486Z" },
+        { id: "voerde", name: "Voerde", type: "district", hot: false, label: [386, 465], d: "M365 371 434 412 433 506 376 551 352 533 326 454Z" },
+        { id: "huenxe", name: "Hünxe", type: "district", hot: false, label: [510, 405], d: "M434 412 493 366 582 356 635 430 590 502 515 528 433 506Z" },
+        { id: "dinslaken", name: "Dinslaken", type: "district", hot: false, label: [486, 528], d: "M376 551 433 506 515 528 525 599 462 625 409 596Z" },
+        { id: "rheinberg", name: "Rheinberg", type: "district", hot: false, label: [311, 586], d: "M278 567 352 533 376 551 409 596 389 672 315 692 260 630Z" },
+        { id: "kamp-lintfort", name: "Kamp-Lintfort", type: "district", hot: false, label: [217, 651], d: "M205 532 278 567 260 630 315 692 245 738 166 703 145 612Z" },
+        { id: "moers", name: "Moers", type: "district", hot: false, label: [313, 738], d: "M245 738 315 692 389 672 430 735 382 812 288 806Z" },
+        { id: "duisburg", name: "Duisburg", type: "city", hot: true, label: [465, 708], d: "M430 735 389 672 409 596 462 625 525 599 576 652 556 742 492 802Z" },
+        { id: "oberhausen", name: "Oberhausen", type: "city", hot: true, label: [552, 573], d: "M525 599 515 528 590 502 638 561 612 633 576 652Z" },
+        { id: "muelheim", name: "Mülheim an der Ruhr", type: "city", hot: true, label: [573, 777], d: "M492 802 556 742 612 768 637 846 568 883 502 857Z" },
+        { id: "essen", name: "Essen", type: "city", hot: true, label: [712, 745], d: "M612 633 697 603 775 628 811 727 765 817 637 846 612 768 556 742 576 652Z" },
+        { id: "bottrop", name: "Bottrop", type: "city", hot: true, label: [635, 437], d: "M590 502 635 430 710 366 785 415 767 505 697 603 638 561Z" },
+        { id: "gladbeck", name: "Gladbeck", type: "city", hot: true, label: [743, 528], d: "M697 603 767 505 842 529 850 611 775 628Z" },
+        { id: "gelsenkirchen", name: "Gelsenkirchen", type: "city", hot: true, label: [839, 558], d: "M775 628 850 611 899 548 966 584 962 680 900 732 811 727Z" },
+        { id: "bochum", name: "Bochum", type: "city", hot: true, label: [930, 758], d: "M811 727 900 732 962 680 1060 715 1037 811 940 858 857 842Z" },
+        { id: "herne", name: "Herne", type: "city", hot: true, label: [967, 618], d: "M899 548 966 584 1032 555 1080 612 1060 715 962 680Z" },
+        { id: "herten", name: "Herten", type: "district", hot: false, label: [856, 458], d: "M842 529 767 505 785 415 846 384 914 434 899 548Z" },
+        { id: "recklinghausen", name: "Recklinghausen", type: "district", hot: false, label: [969, 471], d: "M914 434 990 382 1068 410 1078 506 1032 555 966 584 899 548Z" },
+        { id: "castrop", name: "Castrop-Rauxel", type: "district", hot: false, label: [1089, 548], d: "M1032 555 1078 506 1146 522 1176 598 1128 655 1080 612Z" },
+        { id: "witten", name: "Witten", type: "district", hot: false, label: [1046, 817], d: "M940 858 1037 811 1086 827 1117 896 1034 930 956 912Z" },
+        { id: "hattingen", name: "Hattingen", type: "district", hot: false, label: [858, 867], d: "M765 817 857 842 940 858 956 912 873 946 777 919Z" },
+        { id: "dorsten", name: "Dorsten", type: "district", hot: false, label: [700, 146], d: "M615 276 654 142 743 92 829 130 870 230 808 309 710 366 635 430 582 356Z" },
+        { id: "haltern", name: "Haltern am See", type: "district", hot: false, label: [900, 128], d: "M743 92 873 29 988 67 1055 143 1029 246 924 279 870 230 829 130Z" },
+        { id: "marl", name: "Marl", type: "district", hot: false, label: [864, 303], d: "M808 309 870 230 924 279 990 382 914 434 846 384Z" },
+        { id: "oer-erkenschwick", name: "Oer-Erkenschwick", type: "district", hot: false, label: [1013, 329], d: "M924 279 1029 246 1092 297 1068 410 990 382Z" },
+        { id: "datteln", name: "Datteln", type: "district", hot: false, label: [1120, 356], d: "M1029 246 1110 191 1193 235 1198 332 1146 522 1078 506 1068 410 1092 297Z" },
+        { id: "waltrop", name: "Waltrop", type: "district", hot: false, label: [1164, 456], d: "M1146 522 1198 332 1263 380 1268 500 1220 562Z" },
+        { id: "selm", name: "Selm", type: "district", hot: false, label: [1235, 246], d: "M1193 235 1248 145 1325 214 1305 326 1263 380 1198 332Z" },
+        { id: "werne", name: "Werne", type: "district", hot: false, label: [1347, 282], d: "M1325 214 1410 174 1494 240 1458 345 1366 365 1305 326Z" },
+        { id: "luenen", name: "Lünen", type: "district", hot: false, label: [1258, 413], d: "M1220 562 1268 500 1263 380 1305 326 1366 365 1355 458 1290 520Z" },
+        { id: "bergkamen", name: "Bergkamen", type: "district", hot: false, label: [1362, 421], d: "M1366 365 1458 345 1492 410 1447 484 1355 458Z" },
+        { id: "kamen", name: "Kamen", type: "district", hot: false, label: [1372, 513], d: "M1290 520 1355 458 1447 484 1432 574 1338 593Z" },
+        { id: "dortmund", name: "Dortmund", type: "city", hot: true, label: [1194, 634], d: "M1080 612 1128 655 1220 562 1290 520 1338 593 1328 711 1238 777 1130 736 1060 715Z" },
+        { id: "unna", name: "Unna", type: "district", hot: false, label: [1418, 622], d: "M1338 593 1432 574 1510 620 1498 708 1404 746 1328 711Z" },
+        { id: "hamm", name: "Hamm", type: "city", hot: true, label: [1491, 316], d: "M1458 345 1494 240 1568 184 1630 243 1600 348 1510 408 1492 410Z" },
+        { id: "boenen", name: "Bönen", type: "district", hot: false, label: [1510, 474], d: "M1492 410 1510 408 1588 454 1570 560 1510 620 1432 574 1447 484Z" },
+        { id: "schwerte", name: "Schwerte", type: "district", hot: false, label: [1326, 791], d: "M1238 777 1328 711 1404 746 1388 829 1298 852Z" },
+        { id: "hagen", name: "Hagen", type: "city", hot: true, label: [1224, 858], d: "M1117 896 1086 827 1130 736 1238 777 1298 852 1262 952 1166 970Z" },
+        { id: "herdecke", name: "Herdecke", type: "district", hot: false, label: [1135, 807], d: "M1086 827 1037 811 1060 715 1130 736Z" },
+        { id: "wetter", name: "Wetter", type: "district", hot: false, label: [1079, 878], d: "M1034 930 1117 896 1086 827 1037 811Z" },
+        { id: "schwelm", name: "Schwelm", type: "district", hot: false, label: [1015, 948], d: "M956 912 1034 930 1015 997 928 982Z" }
+      ];
+
       const locations = [
         {
-          id: "vancouver",
-          city: "Vancouver",
-          continent: "Nordamerika",
-          label: "Naturprojekt",
-          icon: "icon-nature",
-          iconSize: 1.08,
-          ring: 48,
-          priority: "groß",
-          map: { x: 238, y: 265 },
-          text: "Eine mobile Naturwerkstatt verbindet Jugendgruppen, Stadtgärten und Kulturaktionen im öffentlichen Raum.",
-          focus: "Natur, Kultur, Jugend",
-          region: "Kanada"
-        },
-        {
-          id: "mexico",
-          city: "Mexico City",
-          continent: "Nordamerika",
-          label: "Werkstatt",
-          icon: "icon-community",
-          iconSize: 0.88,
-          ring: 40,
-          priority: "mittel",
-          map: { x: 312, y: 398 },
-          text: "Ein offenes Vereinslabor sammelt Ideen aus Schulen, Sportgruppen und lokalen Nachbarschaften.",
-          focus: "Community, Mentoring",
-          region: "Mexiko"
-        },
-        {
-          id: "lima",
-          city: "Lima",
-          continent: "Südamerika",
-          label: "Food-Lab",
-          icon: "icon-food",
-          iconSize: 0.78,
-          ring: 36,
-          priority: "klein",
-          map: { x: 407, y: 601 },
-          text: "Kleine Food-Labs geben Familien Zugang zu Kochkursen, Vorratswissen und Vereinsküchen.",
-          focus: "Ernährung, Familie",
-          region: "Peru"
-        },
-        {
-          id: "rio",
-          city: "Rio",
-          continent: "Südamerika",
-          label: "Wasserstation",
+          id: "duisburg",
+          city: "Duisburg",
+          continent: "Ruhrgebiet West",
+          label: "Rhein-Hafen",
           icon: "icon-water",
-          iconSize: 1,
-          ring: 45,
-          priority: "groß",
-          map: { x: 503, y: 676 },
-          text: "Mobile Wasserstationen und Nachbarschaftsarbeit verbinden Versorgung mit Bildung und Hygiene.",
-          focus: "Wasser, Hygiene",
-          region: "Brasilien"
+          iconSize: 1.06,
+          ring: 48,
+          priority: "Wasser",
+          map: { x: 465, y: 708 },
+          text: "Westlicher Einstieg in die Region: Rhein, Hafenstruktur und Kanalnetz prägen die Karte deutlich.",
+          focus: "Rhein, Hafen, Logistik",
+          region: "Kreisfreie Stadt"
         },
         {
-          id: "lisbon",
-          city: "Lissabon",
-          continent: "Europa",
-          label: "Health Hub",
-          icon: "icon-health",
-          iconSize: 0.86,
-          ring: 39,
-          priority: "mittel",
-          map: { x: 713, y: 350 },
-          text: "Ein Health Hub unterstützt Familien mit Beratung, Reparaturhilfe und schnellen Vereinskontakten.",
-          focus: "Beratung, Gesundheit",
-          region: "Portugal"
+          id: "essen",
+          city: "Essen",
+          continent: "Zentrum Ruhr",
+          label: "Grüne Mitte",
+          icon: "icon-leaf",
+          iconSize: 1.03,
+          ring: 47,
+          priority: "Grün",
+          map: { x: 712, y: 745 },
+          text: "Essen sitzt als starke grüne Fläche im südlichen Zentrum und verbindet Ruhrtal, Stadtparkachsen und Kulturorte.",
+          focus: "Parks, Kultur, Stadtgrün",
+          region: "Kreisfreie Stadt"
         },
         {
-          id: "nairobi",
-          city: "Nairobi",
-          continent: "Afrika",
-          label: "Schulprojekt",
-          icon: "icon-education",
-          iconSize: 1.16,
-          ring: 52,
-          priority: "groß",
-          map: { x: 770, y: 617 },
-          text: "Das Projekt stärkt Schulwege, Lernmaterial und regelmäßige Nachmittagsbetreuung.",
-          focus: "Bildung, Betreuung",
-          region: "Kenia"
-        },
-        {
-          id: "kathmandu",
-          city: "Kathmandu",
-          continent: "Asien",
-          label: "Kinderhaus",
-          icon: "icon-home",
-          iconSize: 0.92,
-          ring: 42,
-          priority: "mittel",
-          map: { x: 1060, y: 472 },
-          text: "Ein Kinderhaus schafft verlässliche Räume, warme Mahlzeiten und Lernbegleitung.",
-          focus: "Schutz, Zuhause",
-          region: "Nepal"
-        },
-        {
-          id: "kuala",
-          city: "Kuala Lumpur",
-          continent: "Asien",
+          id: "gelsenkirchen",
+          city: "Gelsenkirchen",
+          continent: "Zentrum Ruhr",
           label: "Community",
-          icon: "icon-community",
+          icon: "icon-people",
+          iconSize: 0.96,
+          ring: 43,
+          priority: "Netzwerk",
+          map: { x: 839, y: 558 },
+          text: "Mitten im Kartenband: Gelsenkirchen eignet sich als Knotenpunkt für Vereine, Schulen und Stadtteilprojekte.",
+          focus: "Vereine, Quartiere",
+          region: "Kreisfreie Stadt"
+        },
+        {
+          id: "bochum",
+          city: "Bochum",
+          continent: "Zentrum Ruhr",
+          label: "Bildung",
+          icon: "icon-education",
+          iconSize: 1.08,
+          ring: 49,
+          priority: "Lernen",
+          map: { x: 930, y: 758 },
+          text: "Bochum markiert die Bildungsachse im Süden der Karte, mit kurzer Distanz zu Witten, Herne und Essen.",
+          focus: "Bildung, Wissen",
+          region: "Kreisfreie Stadt"
+        },
+        {
+          id: "dortmund",
+          city: "Dortmund",
+          continent: "Ruhrgebiet Ost",
+          label: "Stadtlabor",
+          icon: "icon-bolt",
+          iconSize: 1.2,
+          ring: 54,
+          priority: "Energie",
+          map: { x: 1194, y: 634 },
+          text: "Dortmund ist die große östliche Platte und verbindet Kanal, Emscherraum und südliche Ruhrlinie.",
+          focus: "Innovation, Energie",
+          region: "Kreisfreie Stadt"
+        },
+        {
+          id: "hamm",
+          city: "Hamm",
+          continent: "Ruhrgebiet Ost",
+          label: "Kanalende",
+          icon: "icon-water",
+          iconSize: 0.94,
+          ring: 42,
+          priority: "Kanal",
+          map: { x: 1491, y: 316 },
+          text: "Hamm bildet den markanten östlichen Abschluss der Karte am Datteln-Hamm-Kanal.",
+          focus: "Kanal, Mobilität",
+          region: "Kreisfreie Stadt"
+        },
+        {
+          id: "hagen",
+          city: "Hagen",
+          continent: "Südliches Ruhrgebiet",
+          label: "Südkante",
+          icon: "icon-home",
+          iconSize: 0.98,
+          ring: 44,
+          priority: "Süd",
+          map: { x: 1224, y: 858 },
+          text: "Hagen liegt als kräftige südliche Fläche unterhalb der Ruhrlinie und bringt Tiefe in die Region.",
+          focus: "Südraum, Übergang",
+          region: "Kreisfreie Stadt"
+        },
+        {
+          id: "recklinghausen",
+          city: "Recklinghausen",
+          continent: "Kreis Recklinghausen",
+          label: "Kreiszentrum",
+          icon: "icon-health",
+          iconSize: 0.9,
+          ring: 40,
+          priority: "Kreis",
+          map: { x: 969, y: 471 },
+          text: "Der Kreis Recklinghausen spannt den nördlichen Raum zwischen Lippe, Kanal und den zentralen Städten.",
+          focus: "Kreisstruktur, Versorgung",
+          region: "Kreis"
+        },
+        {
+          id: "wesel",
+          city: "Wesel",
+          continent: "Niederrhein",
+          label: "Rheinraum",
+          icon: "icon-leaf",
           iconSize: 0.84,
           ring: 38,
-          priority: "klein",
-          map: { x: 1114, y: 665 },
-          text: "Lokale Gruppen organisieren Baumpflanzungen, Workshops und Patenschaften.",
-          focus: "Umwelt, Vereine",
-          region: "Malaysia"
+          priority: "Kreis",
+          map: { x: 354, y: 292 },
+          text: "Wesel und der Niederrhein bilden den hellgrünen westlichen Kartenrand mit Rheinbezug.",
+          focus: "Niederrhein, Natur",
+          region: "Kreis"
         },
         {
-          id: "sydney",
-          city: "Sydney",
-          continent: "Ozeanien",
-          label: "Solar-Lab",
-          icon: "icon-energy",
-          iconSize: 1.28,
-          ring: 55,
-          priority: "sehr groß",
-          map: { x: 1245, y: 770 },
-          text: "Ein Solar-Lab macht Technik greifbar: Jugendliche bauen Mini-Anlagen und teilen Wissen mit Vereinen.",
-          focus: "Energie, Technik",
-          region: "Australien"
+          id: "unna",
+          city: "Unna",
+          continent: "Kreis Unna",
+          label: "Ostbogen",
+          icon: "icon-people",
+          iconSize: 0.86,
+          ring: 39,
+          priority: "Kreis",
+          map: { x: 1418, y: 622 },
+          text: "Unna schließt die Karte nach Osten und verbindet Dortmund, Hamm und die südliche Ruhrkante.",
+          focus: "Kreis, Verbindung",
+          region: "Kreis"
         }
       ];
 
       const svgNS = "http://www.w3.org/2000/svg";
       const phone = document.querySelector(".phone");
       const world = document.querySelector(".map-world");
+      const regionShadows = document.querySelector("#regionShadows");
+      const regionDepths = document.querySelector("#regionDepths");
+      const regionTops = document.querySelector("#regionTops");
+      const cityLabels = document.querySelector("#cityLabels");
       const markersLayer = document.querySelector("#markersLayer");
       const strip = document.querySelector(".city-strip");
       const stepCount = document.querySelector("#stepCount");
@@ -1191,6 +1268,32 @@
         return node;
       }
 
+      function renderRegions() {
+        regionShadows.innerHTML = "";
+        regionDepths.innerHTML = "";
+        regionTops.innerHTML = "";
+        cityLabels.innerHTML = "";
+
+        regions.forEach((item) => {
+          const common = { d: item.d };
+          regionShadows.append(createSvgElement("path", { ...common, class: "region-shadow" }));
+          regionDepths.append(createSvgElement("path", { ...common, class: "region-depth" }));
+          regionTops.append(createSvgElement("path", {
+            ...common,
+            class: `region-top ${item.type === "city" ? "city" : ""} ${item.hot ? "hot" : ""}`,
+            "data-region": item.id
+          }));
+
+          const label = createSvgElement("text", {
+            class: "city-label",
+            x: item.label[0],
+            y: item.label[1]
+          });
+          label.textContent = item.name;
+          cityLabels.append(label);
+        });
+      }
+
       function renderMarkers() {
         markersLayer.innerHTML = "";
 
@@ -1211,16 +1314,11 @@
             transform: `scale(${item.iconSize})`
           });
           const use = createSvgElement("use", { href: `#${item.icon}` });
-          const text = createSvgElement("text", {
-            x: "0",
-            y: item.ring + 21,
-            "text-anchor": "middle"
-          });
+          const text = createSvgElement("text", { x: "0", y: item.ring + 21 });
           const meta = createSvgElement("text", {
             class: "marker-meta",
             x: "0",
-            y: item.ring + 37,
-            "text-anchor": "middle"
+            y: item.ring + 37
           });
 
           text.textContent = item.city;
@@ -1249,11 +1347,11 @@
         const web = isWebLayout();
         const panelWidth = openId && web ? infoLayer.offsetWidth + parseFloat(getComputedStyle(infoLayer).right || 0) : 0;
         const leftRail = web ? Math.min(320, phone.clientWidth * 0.26) : 0;
-        const scale = web ? (phone.clientWidth >= 1120 ? 1.03 : 0.9) : compact ? 1.73 : 1.62;
+        const scale = web ? (phone.clientWidth >= 1120 ? 0.9 : 0.78) : compact ? 1.52 : 1.38;
         const centerX = web
           ? leftRail + (phone.clientWidth - leftRail - panelWidth) / 2
           : phone.clientWidth / 2;
-        const centerY = web ? phone.clientHeight * 0.53 : openId ? phone.clientHeight * 0.34 : phone.clientHeight * 0.45;
+        const centerY = web ? phone.clientHeight * 0.53 : openId ? phone.clientHeight * 0.35 : phone.clientHeight * 0.46;
         const x = centerX - location.map.x * scale;
         const y = centerY - location.map.y * scale;
 
@@ -1264,7 +1362,7 @@
 
       function routeBetween(from, to) {
         const midX = (from.map.x + to.map.x) / 2;
-        const midY = Math.min(from.map.y, to.map.y) - Math.max(70, Math.abs(to.map.x - from.map.x) * 0.13);
+        const midY = Math.min(from.map.y, to.map.y) - Math.max(55, Math.abs(to.map.x - from.map.x) * 0.1);
         return `M${from.map.x} ${from.map.y} Q${midX} ${midY} ${to.map.x} ${to.map.y}`;
       }
 
@@ -1314,6 +1412,10 @@
           marker.setAttribute("aria-current", String(isCurrent));
         });
 
+        document.querySelectorAll(".region-top").forEach((region) => {
+          region.classList.toggle("is-active", region.dataset.region === item.id);
+        });
+
         [...strip.querySelectorAll(".city-button")].forEach((button, buttonIndex) => {
           button.classList.toggle("is-active", buttonIndex === activeIndex);
           if (buttonIndex === activeIndex && !options.skipScroll) {
@@ -1336,6 +1438,7 @@
       function updateInfo(item) {
         infoKicker.textContent = `${item.continent} · ${item.label}`;
         infoTitle.textContent = item.city;
+        infoTitle.classList.toggle("is-long", item.city.length > 10);
         infoText.textContent = item.text;
         infoFocus.textContent = item.focus;
         infoRegion.textContent = item.region;
@@ -1431,6 +1534,7 @@
         }
       }
 
+      renderRegions();
       renderMarkers();
       renderButtons();
 
