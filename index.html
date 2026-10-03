@@ -152,6 +152,7 @@
       .map-stage::after {
         position: absolute;
         inset: 0 0 auto;
+        z-index: 5;
         height: 190px;
         pointer-events: none;
         content: "";
@@ -173,6 +174,33 @@
         transform-origin: 0 0;
         transition: transform 420ms cubic-bezier(0.2, 0.8, 0.2, 1);
         will-change: transform;
+      }
+
+      .city-3d-world {
+        --map-x: -520px;
+        --map-y: -240px;
+        --map-scale: 1.4;
+        position: absolute;
+        top: 0;
+        left: 0;
+        z-index: 4;
+        width: 1600px;
+        height: 980px;
+        contain: layout paint size;
+        opacity: 0.92;
+        pointer-events: none;
+        transform:
+          translate3d(var(--map-x), var(--map-y), 0)
+          scale(var(--map-scale));
+        transform-origin: 0 0;
+        transition: transform 420ms cubic-bezier(0.2, 0.8, 0.2, 1);
+        will-change: transform;
+      }
+
+      .city-3d-world canvas {
+        display: block;
+        width: 1600px;
+        height: 980px;
       }
 
       .region-shadow {
@@ -559,12 +587,14 @@
 
       .info-title {
         margin: 0;
-        overflow-wrap: anywhere;
+        overflow-wrap: break-word;
         font-family: Georgia, "Times New Roman", serif;
-        font-size: 2.12rem;
+        font-size: clamp(1.82rem, 8vw, 2.08rem);
         font-style: italic;
         font-weight: 950;
+        hyphens: manual;
         line-height: 0.92;
+        word-break: normal;
       }
 
       .info-title.is-long {
@@ -776,11 +806,12 @@
         }
 
         .info-title {
-          font-size: 3rem;
+          font-size: clamp(2rem, 3.1vw, 2.42rem);
         }
 
         .info-title.is-long {
-          font-size: 2.42rem;
+          font-size: clamp(1.68rem, 2.6vw, 2rem);
+          line-height: 1.02;
         }
 
         .info-body p {
@@ -974,6 +1005,9 @@
 
           <g id="markersLayer"></g>
         </svg>
+        <div class="city-3d-world" id="city3dWorld" aria-hidden="true">
+          <canvas id="city3dCanvas" width="1600" height="980"></canvas>
+        </div>
       </section>
 
       <div class="map-legend" aria-hidden="true"><span></span> Flüsse und Kanäle</div>
@@ -1212,6 +1246,7 @@
       const svgNS = "http://www.w3.org/2000/svg";
       const phone = document.querySelector(".phone");
       const world = document.querySelector(".map-world");
+      const city3dWorld = document.querySelector("#city3dWorld");
       const regionShadows = document.querySelector("#regionShadows");
       const regionDepths = document.querySelector("#regionDepths");
       const regionTops = document.querySelector("#regionTops");
@@ -1339,6 +1374,9 @@
         world.style.setProperty("--map-scale", scale);
         world.style.setProperty("--map-x", `${x}px`);
         world.style.setProperty("--map-y", `${y}px`);
+        city3dWorld?.style.setProperty("--map-scale", scale);
+        city3dWorld?.style.setProperty("--map-x", `${x}px`);
+        city3dWorld?.style.setProperty("--map-y", `${y}px`);
       }
 
       function routeBetween(from, to) {
@@ -1405,6 +1443,8 @@
         });
 
         stepCount.textContent = `${String(activeIndex + 1).padStart(2, "0")} / ${String(locations.length).padStart(2, "0")}`;
+        window.regionMapCurrentId = item.id;
+        window.updateCity3DActive?.(item.id);
         centerOnLocation(item);
 
         if (!options.skipRoute && previousIndex !== activeIndex) {
@@ -1518,6 +1558,7 @@
       renderRegions();
       renderMarkers();
       renderButtons();
+      window.regionMapLocations = locations;
 
       strip.addEventListener("click", (event) => {
         const button = event.target.closest(".city-button");
@@ -1561,6 +1602,305 @@
 
       window.addEventListener("resize", () => centerOnLocation(locations[activeIndex]));
       setActive(0, { skipScroll: true, skipRoute: true });
+    </script>
+    <script type="module">
+      import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js";
+
+      const canvas3d = document.querySelector("#city3dCanvas");
+      const citySource = window.regionMapLocations || [];
+      const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+      const mapWidth = 1600;
+      const mapHeight = 980;
+
+      if (canvas3d && citySource.length) {
+        const renderer = new THREE.WebGLRenderer({
+          canvas: canvas3d,
+          alpha: true,
+          antialias: true,
+          preserveDrawingBuffer: true,
+          powerPreference: "high-performance"
+        });
+        renderer.outputColorSpace = THREE.SRGBColorSpace;
+        renderer.setClearColor(0x000000, 0);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.35));
+        renderer.setSize(mapWidth, mapHeight, false);
+        renderer.sortObjects = true;
+
+        const scene = new THREE.Scene();
+        const camera = new THREE.OrthographicCamera(0, mapWidth, mapHeight, 0, -100, 100);
+        camera.position.z = 10;
+
+        const materialCache = new Map();
+        const cityRecords = new Map();
+
+        const profiles = {
+          duisburg: {
+            accent: "#2d78af",
+            offset: [-36, -74],
+            scale: 1.06,
+            base: [88, 24],
+            blocks: [[-34, 26, 16, 13, 55], [-10, 31, 13, 12, 42], [16, 23, 12, 13, 64], [38, 35, 11, 10, 32]],
+            mast: true
+          },
+          essen: {
+            accent: "#7aa541",
+            offset: [36, -84],
+            scale: 1.18,
+            base: [96, 27],
+            blocks: [[-42, 31, 18, 15, 48], [-14, 26, 16, 14, 72], [13, 34, 19, 15, 55], [43, 30, 13, 12, 38]],
+            civic: true
+          },
+          gelsenkirchen: {
+            accent: "#1d2a13",
+            offset: [-24, -78],
+            scale: 1.02,
+            base: [82, 23],
+            blocks: [[-30, 29, 14, 12, 48], [-9, 31, 13, 11, 64], [12, 30, 13, 11, 64], [35, 35, 10, 10, 34]],
+            mast: true
+          },
+          bochum: {
+            accent: "#d7a82c",
+            offset: [32, -80],
+            scale: 1.11,
+            base: [88, 25],
+            blocks: [[-33, 30, 15, 13, 40], [-9, 24, 15, 14, 58], [16, 33, 17, 14, 45], [41, 36, 10, 9, 31]],
+            civic: true
+          },
+          dortmund: {
+            accent: "#9bc43a",
+            offset: [-44, -91],
+            scale: 1.22,
+            base: [104, 29],
+            blocks: [[-45, 34, 17, 14, 48], [-18, 29, 18, 16, 76], [11, 34, 20, 16, 59], [43, 30, 14, 12, 42]],
+            mast: true
+          },
+          hamm: {
+            accent: "#4a90c9",
+            offset: [-30, -77],
+            scale: 0.94,
+            base: [78, 22],
+            blocks: [[-28, 29, 13, 11, 36], [-8, 25, 13, 12, 48], [15, 31, 15, 12, 39], [36, 35, 9, 9, 28]]
+          },
+          hagen: {
+            accent: "#83a833",
+            offset: [18, -83],
+            scale: 1.08,
+            base: [86, 25],
+            blocks: [[-34, 32, 14, 12, 42], [-12, 27, 16, 14, 61], [14, 33, 16, 13, 44], [39, 35, 10, 10, 32]],
+            civic: true
+          },
+          recklinghausen: {
+            accent: "#b7c95c",
+            offset: [26, -72],
+            scale: 0.93,
+            base: [76, 21],
+            blocks: [[-27, 28, 12, 10, 34], [-8, 24, 12, 11, 45], [13, 30, 13, 11, 36], [32, 34, 9, 8, 25]]
+          },
+          wesel: {
+            accent: "#6fa2bd",
+            offset: [-32, -66],
+            scale: 0.88,
+            base: [72, 20],
+            blocks: [[-24, 27, 11, 10, 30], [-6, 24, 12, 10, 40], [13, 30, 12, 10, 31], [30, 33, 8, 8, 22]]
+          },
+          unna: {
+            accent: "#a6bd51",
+            offset: [-26, -70],
+            scale: 0.91,
+            base: [74, 20],
+            blocks: [[-26, 28, 11, 10, 31], [-7, 24, 12, 11, 43], [14, 29, 13, 11, 34], [32, 33, 9, 8, 24]]
+          }
+        };
+
+        function cachedMaterial(color, opacity = 1) {
+          const key = `${color}-${opacity}`;
+          if (!materialCache.has(key)) {
+            materialCache.set(key, new THREE.MeshBasicMaterial({
+              color,
+              opacity,
+              transparent: opacity < 1,
+              depthTest: false,
+              depthWrite: false,
+              side: THREE.DoubleSide
+            }));
+          }
+          return materialCache.get(key);
+        }
+
+        function shapeFrom(points) {
+          const shape = new THREE.Shape();
+          shape.moveTo(points[0][0], points[0][1]);
+          points.slice(1).forEach(([x, y]) => shape.lineTo(x, y));
+          shape.closePath();
+          return shape;
+        }
+
+        function addShape(group, points, color, opacity = 1, order = 1) {
+          const mesh = new THREE.Mesh(
+            new THREE.ShapeGeometry(shapeFrom(points)),
+            cachedMaterial(color, opacity)
+          );
+          mesh.renderOrder = order;
+          group.add(mesh);
+          return mesh;
+        }
+
+        function addEllipse(group, x, y, rx, ry, color, opacity, order) {
+          const shape = new THREE.Shape();
+          shape.absellipse(x, y, rx, ry, 0, Math.PI * 2, false, 0);
+          const mesh = new THREE.Mesh(
+            new THREE.ShapeGeometry(shape, 32),
+            cachedMaterial(color, opacity)
+          );
+          mesh.renderOrder = order;
+          group.add(mesh);
+          return mesh;
+        }
+
+        function addIsoBlock(group, x, y, w, d, h, accent, order) {
+          const sideDark = "#8b938e";
+          const sideMid = "#b9c0bb";
+          const top = "#fbfbf4";
+          const roof = accent;
+          const leftFace = [
+            [x - w, y - h + d * 0.5],
+            [x, y - h + d],
+            [x, y + d],
+            [x - w, y + d * 0.5]
+          ];
+          const rightFace = [
+            [x, y - h + d],
+            [x + w, y - h + d * 0.5],
+            [x + w, y + d * 0.5],
+            [x, y + d]
+          ];
+          const topFace = [
+            [x, y - h],
+            [x + w, y - h + d * 0.5],
+            [x, y - h + d],
+            [x - w, y - h + d * 0.5]
+          ];
+
+          addShape(group, leftFace, sideMid, 1, order + 1);
+          addShape(group, rightFace, sideDark, 1, order + 2);
+          addShape(group, topFace, top, 1, order + 3);
+
+          if (h > 38) {
+            addShape(group, [
+              [x + w * 0.18, y - h + d * 0.88],
+              [x + w * 0.72, y - h + d * 0.6],
+              [x + w * 0.72, y - h + d * 0.82],
+              [x + w * 0.18, y - h + d * 1.08]
+            ], "#eff3ed", 0.38, order + 4);
+          }
+
+          addShape(group, [
+            [x - w * 0.34, y - h + d * 0.48],
+            [x, y - h + d * 0.32],
+            [x + w * 0.34, y - h + d * 0.48],
+            [x, y - h + d * 0.64]
+          ], roof, 0.8, order + 5);
+        }
+
+        function addMast(group, accent, order) {
+          addShape(group, [[-4, -82], [4, -82], [3, -18], [-3, -18]], "#1d211d", 0.92, order);
+          addShape(group, [[4, -80], [25, -68], [4, -56]], accent, 0.9, order + 1);
+          addEllipse(group, 0, -88, 7, 5, "#fbfbf4", 0.95, order + 2);
+        }
+
+        function addCivicRoof(group, accent, order) {
+          addShape(group, [[-38, 2], [0, -16], [38, 2], [0, 17]], accent, 0.36, order);
+          addShape(group, [[-27, 4], [0, -8], [27, 4], [0, 15]], "#fbfbf4", 0.74, order + 1);
+        }
+
+        function createCity(location) {
+          const profile = profiles[location.id] || profiles.essen;
+          const group = new THREE.Group();
+          const [offsetX, offsetY] = profile.offset;
+          const [baseRx, baseRy] = profile.base;
+          const accent = profile.accent;
+
+          group.position.set(location.map.x + offsetX, location.map.y + offsetY, 0);
+          group.scale.setScalar(profile.scale * 0.96);
+          group.userData.baseScale = profile.scale;
+          group.userData.currentScale = profile.scale * 0.96;
+
+          const shadow = addEllipse(group, 8, 38, baseRx, baseRy, "#11160f", 0.18, 1);
+          const platform = addEllipse(group, 0, 25, baseRx * 0.74, baseRy * 0.55, "#fff8db", 0.72, 2);
+          const ring = addEllipse(group, 0, 25, baseRx * 0.9, baseRy * 0.72, accent, 0.1, 3);
+
+          profile.blocks.forEach(([x, y, w, d, h], blockIndex) => {
+            addIsoBlock(group, x, y, w, d, h, accent, 10 + blockIndex * 8);
+          });
+
+          if (profile.mast) {
+            addMast(group, accent, 52);
+          }
+
+          if (profile.civic) {
+            addCivicRoof(group, accent, 56);
+          }
+
+          scene.add(group);
+          const record = { group, ring, shadow, platform, profile };
+          cityRecords.set(location.id, record);
+          return record;
+        }
+
+        function easeOutCubic(value) {
+          return 1 - Math.pow(1 - value, 3);
+        }
+
+        function renderCityScene() {
+          renderer.render(scene, camera);
+          window.__city3DRenderCount = (window.__city3DRenderCount || 0) + 1;
+        }
+
+        function setCityActive(id) {
+          window.__city3DActive = id;
+          const animate = !prefersReducedMotion.matches;
+          const start = performance.now();
+          const duration = animate ? 260 : 0;
+
+          cityRecords.forEach((record, cityId) => {
+            const isActive = cityId === id;
+            const target = record.profile.scale * (isActive ? 1.18 : 0.96);
+            record.group.userData.fromScale = record.group.userData.currentScale;
+            record.group.userData.toScale = target;
+            record.group.renderOrder = isActive ? 20 : 10;
+            record.ring.material = cachedMaterial(record.profile.accent, isActive ? 0.34 : 0.1);
+            record.shadow.material = cachedMaterial("#11160f", isActive ? 0.24 : 0.18);
+            record.platform.material = cachedMaterial("#fff8db", isActive ? 0.9 : 0.72);
+            if (isActive) {
+              scene.add(record.group);
+            }
+          });
+
+          function frame(now) {
+            const t = duration ? Math.min(1, (now - start) / duration) : 1;
+            const eased = easeOutCubic(t);
+            cityRecords.forEach((record) => {
+              const from = record.group.userData.fromScale;
+              const to = record.group.userData.toScale;
+              const current = from + (to - from) * eased;
+              record.group.userData.currentScale = current;
+              record.group.scale.setScalar(current);
+            });
+            renderCityScene();
+            if (t < 1) {
+              requestAnimationFrame(frame);
+            }
+          }
+
+          requestAnimationFrame(frame);
+        }
+
+        citySource.forEach(createCity);
+        window.updateCity3DActive = setCityActive;
+        window.renderCity3D = renderCityScene;
+        window.__city3DReady = true;
+        setCityActive(window.regionMapCurrentId || citySource[0].id);
+      }
     </script>
   </body>
 </html>
